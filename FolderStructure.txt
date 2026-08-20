@@ -1,0 +1,142 @@
+unified-data-platform/
+│
+├── services/
+│   │
+│   ├── asset-model-service/
+│   │   ├── src/
+│   │   │   ├── assets/
+│   │   │   │   ├── controllers/
+│   │   │   │   ├── services/
+│   │   │   │   ├── repositories/
+│   │   │   │   ├── entities/
+│   │   │   │   └── dto/
+│   │   │   │
+│   │   │   ├── asset-types/
+│   │   │   │   ├── controllers/
+│   │   │   │   ├── services/
+│   │   │   │   ├── repositories/
+│   │   │   │   ├── entities/
+│   │   │   │   └── dto/
+│   │   │   │
+│   │   │   ├── variables/
+│   │   │   │   ├── controllers/
+│   │   │   │   ├── services/
+│   │   │   │   ├── repositories/
+│   │   │   │   ├── entities/
+│   │   │   │   └── dto/
+│   │   │   │
+│   │   │   ├── events/
+│   │   │   ├── database/
+│   │   │   ├── app.module.ts
+│   │   │   └── main.ts
+│   │   │
+│   │   ├── test/
+│   │   ├── Dockerfile
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   └── README.md
+│   │
+│   ├── telemetry-service/
+│   │   ├── src/
+│   │   ├── test/
+│   │   ├── Dockerfile
+│   │   ├── package.json
+│   │   └── README.md
+│   │
+│   └── asset-simulator/
+│       ├── src/
+│       ├── test/
+│       ├── Dockerfile
+│       ├── package.json
+│       └── README.md
+│
+├── frontend/
+│   └── angular-app/
+│       ├── src/
+│       ├── public/
+│       ├── angular.json
+│       ├── package.json
+│       └── README.md
+│
+├── contracts/
+│   │
+│   ├── openapi/
+│   │   └── asset-model-api.yaml
+│   │
+│   └── events/
+│       ├── asset-created.schema.json
+│       ├── asset-updated.schema.json
+│       └── asset-deleted.schema.json
+│
+├── infrastructure/
+│   │
+│   ├── docker/
+│   │   └── docker-compose.yml
+│   │
+│   └── kubernetes/
+│       │
+│       ├── namespace.yaml
+│       │
+│       ├── nats/
+│       │   ├── config/
+│       │   ├── deployment.yaml
+│       │   └── service.yaml
+│       │
+│       ├── postgres/
+│       │   ├── statefulset.yaml
+│       │   ├── service.yaml
+│       │   └── configmap.yaml
+│       │
+│       ├── timescaledb/
+│       │   ├── statefulset.yaml
+│       │   └── service.yaml
+│       │
+│       ├── asset-model-service/
+│       │   ├── deployment.yaml
+│       │   ├── service.yaml
+│       │   ├── configmap.yaml
+│       │   └── secret.yaml
+│       │
+│       ├── telemetry-service/
+│       │   ├── deployment.yaml
+│       │   ├── service.yaml
+│       │   └── configmap.yaml
+│       │
+│       └── asset-simulator/
+│           ├── deployment.yaml
+│           └── configmap.yaml
+│
+├── docs/
+│   │
+│   ├── architecture/
+│   │   ├── system-context.md
+│   │   ├── container-diagram.md
+│   │   └── component-diagrams/
+│   │
+│   ├── decisions/
+│   │   ├── ADR-001-monorepo.md
+│   │   ├── ADR-002-nats.md
+│   │   ├── ADR-003-nestjs.md
+│   │   └── ADR-004-postgresql-timescaledb.md
+│   │
+│   ├── experiments/
+│   │   ├── scalability/
+│   │   ├── performance/
+│   │   └── fault-tolerance/
+│   │
+│   └── dissertation/
+│
+├── scripts/
+│   ├── dev/
+│   ├── database/
+│   └── testing/
+│
+├── .github/
+│   └── workflows/
+│       ├── asset-model-service.yml
+│       ├── telemetry-service.yml
+│       └── frontend.yml
+│
+├── .gitignore
+├── README.md
+└── LICENSE
