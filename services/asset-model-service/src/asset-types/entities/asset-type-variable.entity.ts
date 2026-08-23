@@ -1,6 +1,6 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Unique } from "typeorm";
 import { AssetType } from "./asset-type.entity";
-import { VariableDefinition } from "src/variables/entities/variable-definition.entity";
+import { VariableDefinition } from "../../variables/entities/variable-definition.entity";
 
 
 @Entity('asset_type_variables')
