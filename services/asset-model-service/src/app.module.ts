@@ -16,9 +16,9 @@ import { AssetType } from './asset-types/entities/asset-type.entity';
     DatabaseModule,
     AssetsModule,
     ConfigModule.forRoot({
-      isGlobal:true
+      isGlobal: true,
     }),
-    ],
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

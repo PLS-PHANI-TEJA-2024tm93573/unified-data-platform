@@ -1,13 +1,23 @@
 import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 
-export class CreateAssetTypeDto {
+export class CreateVariableDefinitionDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
   name!: string;
 
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(50)
+  dataType!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(20)
+  unit!: string;
+
   @IsOptional()
   @IsString()
-  @MaxLength(500)
+  @MaxLength(20)
   description?: string;
 }

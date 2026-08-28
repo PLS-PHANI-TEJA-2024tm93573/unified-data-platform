@@ -8,6 +8,7 @@
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
@@ -33,7 +34,8 @@
     "pg": "8.23.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "typeorm": "1.1.0"
+    "typeorm": "1.1.0",
+    "typeorm-naming-strategies": "^4.1.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

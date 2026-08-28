@@ -22,16 +22,12 @@ export class Asset {
   @ManyToOne(() => AssetType, {
     nullable: false,
   })
-
-  
   @JoinColumn({ name: 'asset_type_id' })
   assetType!: AssetType;
 
   @ManyToOne(() => Asset, {
     nullable: true,
   })
-
-
   @JoinColumn({ name: 'parent_asset_id' })
   parentAsset?: Asset;
 

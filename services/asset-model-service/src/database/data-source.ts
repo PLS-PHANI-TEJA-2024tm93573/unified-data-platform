@@ -10,18 +10,26 @@ import { VariableDefinition } from '../variables/entities/variable-definition.en
 loadEnvironment();
 
 const environmentConfig = {
-    getOrThrow<T>(propertyPath: string): T {
-        const value = process.env[propertyPath];
-        if (value === undefined || value === '') {
-            throw new Error(`Missing required database configuration: ${propertyPath}`);
-        }
-        return value as T;
-    },
+  getOrThrow<T>(propertyPath: string): T {
+    const value = process.env[propertyPath];
+    if (value === undefined || value === '') {
+      throw new Error(
+        `Missing required database configuration: ${propertyPath}`,
+      );
+    }
+    return value as T;
+  },
 };
 
 export default new DataSource({
-    ...getDatabaseConnectionConfig(environmentConfig),
-    entities: [AssetType, VariableDefinition, AssetTypeVariable, Asset, AssetVariable],
-    migrations: ['src/database/migrations/*.ts'],
-    synchronize: false,
+  ...getDatabaseConnectionConfig(environmentConfig),
+  entities: [
+    AssetType,
+    VariableDefinition,
+    AssetTypeVariable,
+    Asset,
+    AssetVariable,
+  ],
+  migrations: ['src/database/migrations/*.ts'],
+  synchronize: false,
 });

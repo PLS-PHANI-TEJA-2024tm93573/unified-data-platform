@@ -1,10 +1,11 @@
 import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 
-export class CreateAssetTypeDto {
+export class UpdateAssetTypeDto {
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
-  name!: string;
+  name?: string;
 
   @IsOptional()
   @IsString()

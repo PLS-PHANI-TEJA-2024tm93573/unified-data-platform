@@ -1,17 +1,14 @@
-import { 
-        Entity,
-        CreateDateColumn,
-        PrimaryGeneratedColumn,
-        Column,
-        UpdateDateColumn,
-    } from "typeorm";
-
-
+import {
+  Entity,
+  CreateDateColumn,
+  PrimaryGeneratedColumn,
+  Column,
+  UpdateDateColumn,
+} from 'typeorm';
 
 @Entity('variable_definitions')
 export class VariableDefinition {
-
-    /**
+  /**
      * variable_definitions
         --------------------
         id
@@ -24,27 +21,24 @@ export class VariableDefinition {
      * 
      */
 
+  @PrimaryGeneratedColumn('uuid')
+  id!: string;
 
-    @PrimaryGeneratedColumn('uuid')
-    id!:string;
-    
-    @Column({unique:true})
-    name!:string;
+  @Column({ unique: true })
+  name!: string;
 
-    @Column()
-    data_type!: string;
+  @Column({ name: 'data_type' })
+  dataType!: string;
 
-    @Column()
-    unit!: string;
+  @Column()
+  unit!: string;
 
-    @Column({ nullable: true })
-    description?:string;
+  @Column({ nullable: true })
+  description?: string;
 
-    @CreateDateColumn({ name: 'created_at' })
-    createdAt!: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt!: Date;
 
-    @UpdateDateColumn({ name: 'updated_at' })
-    updatedAt!: Date
-
-
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt!: Date;
 }
