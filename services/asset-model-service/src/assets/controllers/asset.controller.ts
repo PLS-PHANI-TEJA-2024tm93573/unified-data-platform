@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 
 import { CreateAssetDto } from '../dto/create-asset.dto';
 import { AssetService } from '../services/asset.service';
@@ -15,6 +16,7 @@ import { AddAssetVariableDto } from '../dto/add-asset-varaible.dto';
 import { UpdateAssetDto } from '../dto/update-asset.dto';
 
 @Controller('assets')
+@ApiTags('Assets')
 export class AssetController {
   constructor(private readonly assetService: AssetService) {}
 

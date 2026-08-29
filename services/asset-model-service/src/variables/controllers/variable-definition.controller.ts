@@ -8,11 +8,13 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { CreateVariableDefinitionDto } from '../dto/create-variable-definition.dto';
 import { VariableDefinitionService } from '../services/variable-definition.service';
 import { UpdateVariableDefinitionDto } from '../dto/update-variable-definition.dto';
 
 @Controller('variables')
+@ApiTags('Variable Definitions')
 export class VariableDefinitionController {
   constructor(
     private readonly variableDefinitionService: VariableDefinitionService,
