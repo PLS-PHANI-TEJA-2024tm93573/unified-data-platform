@@ -20,9 +20,15 @@ message GetAssetHierarchyResponse {
 message AssetNode {
   string id = 1;
   string name = 2;
-  string asset_type_id = 3;
-  repeated AssetVariable variables = 4;
-  repeated AssetNode children = 5;
+  // string parent_asset_id = 3;
+  AssetType asset_type = 4;
+  repeated AssetVariable variables = 5;
+  repeated AssetNode children = 6;
+}
+
+message AssetType {
+  string id = 1;
+  string name = 2;
 }
 
 message AssetVariable {

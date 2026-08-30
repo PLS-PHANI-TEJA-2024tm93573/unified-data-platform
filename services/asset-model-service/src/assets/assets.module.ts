@@ -7,6 +7,7 @@ import { AssetService } from './services/asset.service';
 import { AssetController } from './controllers/asset.controller';
 import { VariableDefinition } from '../variables/entities/variable-definition.entity';
 import { AssetTypeVariable } from '../asset-types/entities/asset-type-variable.entity';
+import { AssetGrpcController } from './controllers/asset-grpc.controller';
 
 @Module({
   imports: [
@@ -19,6 +20,9 @@ import { AssetTypeVariable } from '../asset-types/entities/asset-type-variable.e
     ]),
   ],
   providers: [AssetService],
-  controllers: [AssetController],
+  controllers: [
+    AssetController,
+    AssetGrpcController
+  ],
 })
 export class AssetsModule {}
