@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package assetmodel;
+
+service AssetModelService {
+
+    rpc GetAssetHierarchy(GetAssetHierarchyRequest)
+        returns (GetAssetHierarchyResponse);
+}
+
+message GetAssetHierarchyRequest {
+
+}
+
+message GetAssetHierarchyResponse {
+    repeated AssetNode roots = 1;
+}
+
+
+message AssetNode {
+  string id = 1;
+  string name = 2;
+  // string parent_asset_id = 3;
+  AssetType asset_type = 4;
+  repeated AssetVariable variables = 5;
+  repeated AssetNode children = 6;
+}
+
+message AssetType {
+  string id = 1;
+  string name = 2;
+}
+
+message AssetVariable {
+  string id = 1;
+  string name = 2;
+  string data_type = 3;
+  string unit = 4;
+}
