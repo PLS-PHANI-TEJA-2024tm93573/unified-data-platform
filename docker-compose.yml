@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:17
+    image: timescale/timescaledb:latest-pg17
     container_name: unified-data-platform-postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB}

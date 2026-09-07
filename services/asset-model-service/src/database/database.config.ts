@@ -1,4 +1,4 @@
-import { PostgresDataSourceOptions } from 'typeorm/driver/postgres/PostgresDataSourceOptions';
+import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
 export interface DatabaseConfigReader {
@@ -8,7 +8,7 @@ export interface DatabaseConfigReader {
 export function getDatabaseConnectionConfig(
   config: DatabaseConfigReader,
 ): Pick<
-  PostgresDataSourceOptions,
+  PostgresConnectionOptions,
   | 'type'
   | 'host'
   | 'port'

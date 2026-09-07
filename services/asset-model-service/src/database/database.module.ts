@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { getDatabaseConnectionConfig } from './database.config';
 
 @Module({
@@ -9,7 +9,7 @@ import { getDatabaseConnectionConfig } from './database.config';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService): TypeOrmModuleOptions => ({
         ...getDatabaseConnectionConfig(configService),
         autoLoadEntities: true,
         synchronize: false,

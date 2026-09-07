@@ -17,6 +17,24 @@ import { AssetTypeVariable } from '../../asset-types/entities/asset-type-variabl
 import { AddAssetVariableDto } from '../dto/add-asset-varaible.dto';
 import { UpdateAssetDto } from '../dto/update-asset.dto';
 
+export type AssetHierarchyVariable = {
+  id: string;
+  name: string;
+  dataType: string;
+  unit: string;
+};
+
+export type AssetHierarchyNode = {
+  id: string;
+  name: string;
+  assetType: {
+    id: string;
+    name: string;
+  };
+  variables: AssetHierarchyVariable[];
+  children: AssetHierarchyNode[];
+};
+
 @Injectable()
 export class AssetService {
   constructor(
@@ -34,7 +52,7 @@ export class AssetService {
 
     @InjectRepository(AssetTypeVariable)
     private readonly assetTypeVariableRepository: Repository<AssetTypeVariable>,
-  ) {}
+  ) { }
 
   async create(dto: CreateAssetDto): Promise<Asset> {
     const assetType = await this.assetTypeRepository.findOne({
@@ -321,5 +339,81 @@ export class AssetService {
 
     await this.assetVariableRepository.remove(assetVariable);
     return { message: 'Asset variable association deleted' };
+  }
+
+  async getAssetHierarchy() {
+    const [assets, assetVariables] = await Promise.all([
+      this.assetRepository.find({
+        relations: {
+          assetType: true,
+          parentAsset: true,
+        },
+      }),
+
+      this.assetVariableRepository.find({
+        relations: {
+          asset: true,
+          variableDefinition: true,
+        },
+      }),
+    ]);
+
+    const nodes = new Map<string, AssetHierarchyNode>();
+
+    // Create a node for every asset.
+    for (const asset of assets) {
+      nodes.set(asset.id, {
+        id: asset.id,
+        name: asset.name,
+        assetType: {
+          id: asset.assetType.id,
+          name: asset.assetType.name,
+        },
+        variables: [],
+        children: [],
+      });
+    }
+
+    // Attach variables to their corresponding assets.
+    for (const assetVariable of assetVariables) {
+      const node = nodes.get(assetVariable.asset.id);
+
+      if (!node) {
+        continue;
+      }
+
+      node.variables.push({
+        id: assetVariable.variableDefinition.id,
+        name: assetVariable.variableDefinition.name,
+        dataType: assetVariable.variableDefinition.dataType,
+        unit: assetVariable.variableDefinition.unit,
+      });
+    }
+
+    // Build the parent → child hierarchy.
+    const roots: AssetHierarchyNode[] = [];
+
+    for (const asset of assets) {
+      const node = nodes.get(asset.id);
+
+      if (!node) {
+        continue;
+      }
+
+      if (!asset.parentAsset) {
+        roots.push(node);
+        continue;
+      }
+
+      const parentNode = nodes.get(asset.parentAsset.id);
+
+      if (parentNode) {
+        parentNode.children.push(node);
+      }
+    }
+
+    return {
+      roots,
+    };
   }
 }
