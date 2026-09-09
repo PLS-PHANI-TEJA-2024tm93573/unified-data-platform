@@ -10,6 +10,33 @@ services:
       - "${POSTGRES_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - data-platform-net
+    
+  nats:
+    image: nats:latest
+    container_name: unified-data-platform-nats
+    ports:
+      - "4222:4222"
+    networks:
+      - data-platform-net
+    
+
+  # Debug-only service for local message flow testing; not part of the production platform.
+  nodered:
+    image: nodered/node-red:latest
+    container_name: unified-data-platform-nodered
+    ports:
+      - "1880:1880"
+    volumes:
+      - nodered_data:/data
+    networks:
+      - data-platform-net
 
 volumes:
   postgres_data:
+  nodered_data:
+
+networks:
+  data-platform-net:
+    external: true
