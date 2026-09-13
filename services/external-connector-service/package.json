@@ -1,0 +1,13 @@
+{
+  "name": "external-connector-service",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Simple NATS simulator that publishes measurements from asset-config.json",
+  "main": "src/simulator.js",
+  "scripts": {
+    "start": "node src/simulator.js"
+  },
+  "dependencies": {
+    "nats": "^2.29.3"
+  }
+}

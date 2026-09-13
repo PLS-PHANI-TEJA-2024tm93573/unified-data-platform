@@ -1,0 +1,55 @@
+{
+  "roots": [
+    {
+      "variables": [],
+      "children": [
+        {
+          "variables": [
+            {
+              "id": "cf8f3c75-3da6-4542-9edf-4c119038318c",
+              "name": "temperature",
+              "data_type": "FLOAT",
+              "unit": "C"
+            },
+            {
+              "id": "f8a60ff2-5dd8-47d2-b284-0f9496c07da0",
+              "name": "speed",
+              "data_type": "INTEGER",
+              "unit": "RPM"
+            }
+          ],
+          "children": [],
+          "id": "0cb32954-b44e-463e-8811-61eaea81efeb",
+          "name": "Motor-001",
+          "asset_type": {
+            "id": "305a82be-f430-4f6f-bffb-37e5d5ed444a",
+            "name": "MOTOR"
+          }
+        },
+        {
+          "variables": [
+            {
+              "id": "cf8f3c75-3da6-4542-9edf-4c119038318c",
+              "name": "temperature",
+              "data_type": "FLOAT",
+              "unit": "C"
+            }
+          ],
+          "children": [],
+          "id": "a17716a2-ca6a-438c-9265-17991b363364",
+          "name": "Motor-002",
+          "asset_type": {
+            "id": "305a82be-f430-4f6f-bffb-37e5d5ed444a",
+            "name": "MOTOR"
+          }
+        }
+      ],
+      "id": "655ef81e-77f7-4c17-a6a0-521bfd615aff",
+      "name": "Assembly-Line-01",
+      "asset_type": {
+        "id": "03d3b048-4bf4-4cd1-8350-ec99c6d3b997",
+        "name": "ASSEMBLY_LINE"
+      }
+    }
+  ]
+}

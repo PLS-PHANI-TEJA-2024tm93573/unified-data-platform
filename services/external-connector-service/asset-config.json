@@ -1,0 +1,14 @@
+[
+  {
+    "variable_id": "cf8f3c75-3da6-4542-9edf-4c119038318c",
+    "name": "temperature",
+    "acq_cycle": 1000,
+    "data_type": "FLOAT"
+  },
+  {
+    "variable_id": "f8a60ff2-5dd8-47d2-b284-0f9496c07da0",
+    "name": "speed",
+    "acq_cycle": 500,
+    "data_type": "INTEGER"
+  }
+]
