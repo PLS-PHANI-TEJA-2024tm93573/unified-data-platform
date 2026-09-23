@@ -1,0 +1,194 @@
+<div class="asset-hierarchy">
+  <div class="page-header">
+    <p class="eyebrow">Asset model</p>
+    <h2>Asset Hierarchy</h2>
+  </div>
+
+  <div *ngIf="errorMessage" class="error-state" role="alert">
+    <p>{{ errorMessage }}</p>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-state">Loading hierarchy...</div>
+
+  <div *ngIf="!errorMessage && !isLoading" class="tree-wrapper">
+    <ng-container *ngIf="assetHierarchy?.roots?.length; else emptyState">
+      <ng-container
+        *ngTemplateOutlet="tree; context: { $implicit: assetHierarchy.roots }"
+      ></ng-container>
+    </ng-container>
+
+    <ng-template #emptyState>
+      <p class="empty-state">No assets found.</p>
+    </ng-template>
+  </div>
+</div>
+
+<ng-template #tree let-nodes>
+  <ul class="tree">
+    <li *ngFor="let node of nodes" class="tree-node">
+      <div class="node-row">
+        <button
+          *ngIf="hasChildren(node) || isVariableNode(node)"
+          type="button"
+          class="toggle-button"
+          (click)="toggleNode(node.id)"
+          [attr.aria-expanded]="!isCollapsed(node.id)"
+          [attr.aria-label]="(isCollapsed(node.id) ? 'Expand' : 'Collapse') + ' ' + node.name"
+        >
+          {{ isCollapsed(node.id) ? '+' : '−' }}
+        </button>
+
+        <span *ngIf="!hasChildren(node) && !isVariableNode(node)" class="leaf-marker" aria-hidden="true"></span>
+
+        <div class="node-content">
+          <div class="node-main">
+            <span class="node-name">{{ node.name }}</span>
+            <span class="node-type">{{ node.asset_type?.name }}</span>
+          </div>
+
+          <div *ngIf="isVariableNode(node) && !isCollapsed(node.id)" class="variable-details">
+            <div class="detail-row">
+              <span class="detail-label">ID</span>
+              <span>{{ node.details?.id }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Type</span>
+              <span>{{ node.details?.data_type }}</span>
+            </div>
+            <div class="detail-row" *ngIf="node.details?.unit">
+              <span class="detail-label">Unit</span>
+              <span>{{ node.details?.unit }}</span>
+            </div>
+
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-secondary graph-button"
+              (click)="openVariableGraphDialog(node)"
+              [attr.aria-label]="'Open graph for ' + node.name"
+            >
+              <i class="bi bi-graph-up" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <ng-container *ngIf="hasChildren(node) && !isCollapsed(node.id)">
+        <ng-container
+          *ngTemplateOutlet="tree; context: { $implicit: node.children }"
+        ></ng-container>
+      </ng-container>
+    </li>
+  </ul>
+</ng-template>
+
+<div
+  *ngIf="selectedVariableNode"
+  class="modal-backdrop"
+  (click)="closeVariableGraphDialog()"
+>
+  <div
+    class="modal-dialog modal-dialog-centered"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="variableGraphDialogTitle"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 id="variableGraphDialogTitle" class="modal-title">Variable graph</h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="closeVariableGraphDialog()"></button>
+      </div>
+
+      <div class="modal-body">
+        <form [formGroup]="variableGraphForm" novalidate>
+          <div class="mb-3">
+            <label class="form-label" for="variableId">Variable ID</label>
+            <input
+              id="variableId"
+              class="form-control"
+              formControlName="variableId"
+              [class.is-invalid]="variableGraphForm.get('variableId')?.touched && variableGraphForm.get('variableId')?.invalid"
+            />
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label" for="from">From</label>
+              <input
+                id="from"
+                type="datetime-local"
+                class="form-control"
+                formControlName="from"
+                [class.is-invalid]="variableGraphForm.get('from')?.touched && variableGraphForm.get('from')?.invalid"
+              />
+              <div
+                *ngIf="variableGraphForm.get('from')?.touched && variableGraphForm.get('from')?.hasError('required')"
+                class="invalid-feedback d-block"
+              >
+                From is required.
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label" for="to">To</label>
+              <input
+                id="to"
+                type="datetime-local"
+                class="form-control"
+                formControlName="to"
+                [class.is-invalid]="variableGraphForm.get('to')?.touched && variableGraphForm.get('to')?.invalid"
+              />
+              <div
+                *ngIf="variableGraphForm.get('to')?.touched && variableGraphForm.get('to')?.hasError('required')"
+                class="invalid-feedback d-block"
+              >
+                To is required.
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3">
+            <label class="form-label" for="limit">Limit</label>
+            <input
+              id="limit"
+              type="number"
+              class="form-control"
+              formControlName="limit"
+              min="100"
+              max="500"
+              [class.is-invalid]="variableGraphForm.get('limit')?.touched && variableGraphForm.get('limit')?.invalid"
+            />
+            <div
+              *ngIf="variableGraphForm.get('limit')?.touched && variableGraphForm.get('limit')?.hasError('min')"
+              class="invalid-feedback d-block"
+            >
+              Limit must be at least 100.
+            </div>
+            <div
+              *ngIf="variableGraphForm.get('limit')?.touched && variableGraphForm.get('limit')?.hasError('max')"
+              class="invalid-feedback d-block"
+            >
+              Limit cannot be greater than 500.
+            </div>
+          </div>
+
+          <div
+            *ngIf="variableGraphForm.hasError('dateRange') && variableGraphForm.touched"
+            class="text-danger mt-3"
+          >
+            To cannot be before From.
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" (click)="closeVariableGraphDialog()">
+          Cancel
+        </button>
+        <button type="button" class="btn btn-primary" (click)="viewVariableGraph()" [disabled]="variableGraphForm.invalid">
+          View
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,72 @@
+<div class="p-4">
+  <div class="page-header mb-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <p class="eyebrow">Asset model</p>
+      <h2>Plotting</h2>
+    </div>
+
+    <button type="button" class="btn btn-outline-light" (click)="goBack()">
+      <i class="bi bi-arrow-left me-2"></i>
+      Back to asset model
+    </button>
+  </div>
+
+  <div class="card dark-card">
+    <div class="card-body">
+      <h5 class="card-title">Variable plot parameters</h5>
+
+      <div class="mt-3 row g-3">
+        <div class="col-md-6 col-lg-3">
+          <div class="info-box">
+            <span class="label">Variable ID</span>
+            <strong>{{ variableId || '—' }}</strong>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <div class="info-box">
+            <span class="label">From</span>
+            <strong>{{ from || '—' }}</strong>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <div class="info-box">
+            <span class="label">To</span>
+            <strong>{{ to || '—' }}</strong>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <div class="info-box">
+            <span class="label">Limit</span>
+            <strong>{{ limit ?? '—' }}</strong>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <div class="info-box">
+            <span class="label">Data type</span>
+            <strong>{{ dataType || '—' }}</strong>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <div class="info-box">
+            <span class="label">Unit</span>
+            <strong>{{ unit || '—' }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <div *ngIf="isLoading" class="chart-placeholder">Loading measurements...</div>
+
+        <div *ngIf="errorMessage" class="alert alert-danger mt-3 mb-0">
+          {{ errorMessage }}
+        </div>
+
+        <div *ngIf="!isLoading && !errorMessage && !chartData.length" class="chart-placeholder">
+          No measurement data available for the selected range.
+        </div>
+
+        <div *ngIf="chartData.length" #chart class="chart-container"></div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,59 @@
+<main class="app-shell theme-dark">
+  <nav class="topbar navbar border-bottom navbar-dark bg-dark">
+    <div class="container-fluid px-4">
+      <div class="d-flex align-items-center gap-3">
+        <button
+          class="btn btn-outline-secondary btn-sm d-flex align-items-center justify-content-center"
+          type="button"
+          aria-label="Toggle sidebar"
+          (click)="toggleSidebar()"
+        >
+          <span aria-hidden="true" class="fs-5 bi bi-list"></span>
+        </button>
+
+        <div class="brand navbar-brand mb-0">
+          <span class="brand-mark">
+            <i class="bi bi-speedometer"></i>
+          </span>
+          <span>{{ title() }}</span>
+        </div>
+      </div>
+
+      <div class="d-flex align-items-center gap-2">
+        <a class="btn btn-link text-primary fw-semibold p-0" routerLink="/">Home</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="layout">
+    <aside
+      class="sidebar"
+      [class.collapsed]="sidebarCollapsed()"
+      (mouseenter)="expandSidebar()"
+      (mouseleave)="collapseSidebar()"
+    >
+      <div class="sidebar-header">
+        <span class="sidebar-title">Navigation</span>
+      </div>
+
+      <nav class="nav flex-column gap-2">
+        <a class="nav-link active" routerLink="/asset-hierarchy" (click)="collapseSidebar()">
+          <span class="nav-icon bi bi-grid-1x2-fill" aria-hidden="true"></span>
+          <span class="nav-text">Asset Model</span>
+        </a>
+        <a class="nav-link" routerLink="dashboard" (click)="collapseSidebar()">
+          <span class="nav-icon bi bi-bar-chart-line-fill" aria-hidden="true"></span>
+          <span class="nav-text">Reports</span>
+        </a>
+        <a class="nav-link" href="#" (click)="collapseSidebar()">
+          <span class="nav-icon bi bi-gear-fill" aria-hidden="true"></span>
+          <span class="nav-text">Settings</span>
+        </a>
+      </nav>
+    </aside>
+
+    <div class="content-pane">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+</main>
