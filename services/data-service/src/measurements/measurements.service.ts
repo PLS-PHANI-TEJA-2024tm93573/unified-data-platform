@@ -53,12 +53,13 @@ export class MeasurementsService {
     }
 
     const measurements = await builder.getMany();
-    return {
+    const result =  {
       asset_variable_id: query.asset_variable_id,
       data_type: metadata.dataType,
       unit: metadata.unit,
       data: measurements.map((measurement) => this.normalize(measurement)),
     };
+    return result;
   }
 
   async findLatest(assetVariableId: string): Promise<MeasurementResponse> {

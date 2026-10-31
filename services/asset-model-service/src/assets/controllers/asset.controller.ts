@@ -8,12 +8,13 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
 import { CreateAssetDto } from '../dto/create-asset.dto';
 import { AssetService } from '../services/asset.service';
 import { AddAssetVariableDto } from '../dto/add-asset-varaible.dto';
 import { UpdateAssetDto } from '../dto/update-asset.dto';
+import { AssetHierarchyResponseDto } from '../dto/asset-hierarchy-response.dto';
 
 @Controller('assets')
 @ApiTags('Assets')
@@ -28,6 +29,12 @@ export class AssetController {
   @Get()
   getAllAssets() {
     return this.assetService.getAllAssets();
+  }
+
+  @Get('hierarchy')
+  @ApiOkResponse({ type: AssetHierarchyResponseDto })
+  getAssetHierarchy() {
+    return this.assetService.getAssetHierarchy();
   }
 
   @Get(':assetId/variables')

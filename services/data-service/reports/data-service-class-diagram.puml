@@ -1,0 +1,71 @@
+@startuml data-service-class-diagram
+!theme plain
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+
+caption Data Service - Low-Level Class Diagram
+
+package "Application and Domain Services" {
+  class MeasurementsService {
+    +findInRange(query): MeasurementResponse
+    +findLatest(assetVariableId): MeasurementResponse
+    -getMetadata(assetVariableId): DataServiceVariable
+    -normalize(measurement): NormalizedMeasurement
+  }
+
+  class MeasurementConsumer {
+    +processMessage(payload): boolean
+    -isMeasurementMessage(value): boolean
+    -toTypedValue(value, dataType): TypedMeasurementValue
+  }
+
+  class AssetModelSyncService {
+    +onApplicationBootstrap()
+    +synchronize()
+    -flattenHierarchy(roots): VariableCacheRow[]
+    -removeStaleRows(manager, rows)
+  }
+}
+
+package "Persistence Layer" {
+  class Measurement <<Entity>> {
+    +variableId: UUID
+    +timestamp: Date
+    +numericValue: number?
+    +booleanValue: boolean?
+    +textValue: string?
+  }
+
+  class DataServiceVariable <<Entity>> {
+    +assetVariableId: UUID
+    +assetId: UUID
+    +name: string
+    +dataType: string
+    +unit: string?
+    +updatedAt: Date
+  }
+
+}
+
+MeasurementsService --> Measurement : queries
+MeasurementsService --> DataServiceVariable : reads metadata
+MeasurementConsumer --> DataServiceVariable : validates variable metadata
+AssetModelSyncService --> DataServiceVariable : upsert and stale-row delete
+
+note right of Measurement
+  Composite primary key:
+  (variable_id, timestamp)
+
+  Exactly one typed value column
+  is populated per measurement.
+end note
+
+note right of DataServiceVariable
+  Local cache of Asset Model metadata.
+  asset_variable_id is externally owned.
+  No cross-service foreign key.
+end note
+
+@enduml

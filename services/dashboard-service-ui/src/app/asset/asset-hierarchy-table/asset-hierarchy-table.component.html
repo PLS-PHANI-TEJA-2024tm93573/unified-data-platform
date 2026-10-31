@@ -1,0 +1,25 @@
+<!-- <div class="mb-3 flex gap-2">
+  <p-button label="Expand All" icon="pi pi-chevron-down" [text]="true" (onClick)="expandAll()"></p-button>
+  <p-button label="Collapse All" icon="pi pi-chevron-up" [text]="true" (onClick)="collapseAll()"></p-button>
+</div> -->
+
+<p-treeTable [value]="assetHierarchy">
+  <ng-template pTemplate="header">
+    <tr>
+      <th>Asset Name</th>
+      <th>Status</th>
+      <th>Location</th>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="body" let-rowNode let-rowData="rowData">
+    <tr [ttRow]="rowNode">
+      <td>
+        <!-- Toggler renders the expand/collapse arrow -->
+        <p-treeTableToggler [rowNode]="rowNode"></p-treeTableToggler>
+        {{ rowData.name }}
+      </td>
+      <td>{{ rowData.status }}</td>
+      <td>{{ rowData.location }}</td>
+    </tr>
+  </ng-template>
+</p-treeTable>

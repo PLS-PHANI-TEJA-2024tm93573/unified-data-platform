@@ -1,0 +1,48 @@
+<!-- Top Navigation Bar (Clean header without the toggle button) -->
+<p-menubar [model]="topNavItems" class="top-navbar">
+  <ng-template pTemplate="start">
+    <span class="brand-title">Industrial Dashboard</span>
+  </ng-template>
+
+  <ng-template pTemplate="end">
+    <p-button icon="pi pi-user" [rounded]="true" [text]="true"></p-button>
+  </ng-template>
+</p-menubar>
+
+<!-- Main App Layout Container -->
+<div class="app-layout">
+  <!-- Persistent Collapsible Sidebar -->
+  <aside class="mini-sidebar" [class.collapsed]="isCollapsed">
+    <!-- Sidebar Header with Collapse Button -->
+    <div class="sidebar-header">
+      <p-button 
+        [icon]="isCollapsed ? 'pi pi-angle-right' : 'pi pi-angle-left'" 
+        [text]="true" 
+        (onClick)="toggleSidebar()"
+        aria-label="Toggle Sidebar"
+        styleClass="toggle-btn">
+      </p-button>
+      <span class="header-title" *ngIf="!isCollapsed">Navigation</span>
+    </div>
+
+    <!-- Divider Line -->
+    <p-divider styleClass="sidebar-divider"></p-divider>
+
+    <!-- Menu List -->
+    <div class="menu-list">
+      <div 
+        *ngFor="let item of navItems" 
+        class="menu-item"
+        [title]="isCollapsed ? item.label : ''">
+        
+        <i [class]="item.icon" class="item-icon"></i>
+        <span class="item-label" *ngIf="!isCollapsed">{{ item.label }}</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Workspace Content Area -->
+  <main class="content-area">
+    <router-outlet></router-outlet>
+  </main>
+</div>

@@ -1,0 +1,943 @@
+openapi: 3.0.3
+info:
+  title: Asset Model Service API
+  version: 1.0.0
+  description: |
+    REST API for managing asset types, variable definitions, assets, and their
+    associations. Intended as a machine-readable contract for generating
+    client applications and CRUD interfaces.
+
+    Updates use PATCH with partial request bodies; the service does not expose
+    PUT operations. Collection endpoints return arrays and currently do not
+    support pagination, filtering, or sorting. There is no authentication
+    scheme configured in this service.
+
+    The asset hierarchy is also available over gRPC on port 50051, but gRPC
+    methods are not represented in this OpenAPI document.
+  contact:
+    name: Asset Model Service
+servers:
+  - url: http://localhost:3000
+    description: Local development server (override for your deployment)
+tags:
+  - name: Assets
+    description: Physical or logical assets and their parent-child hierarchy
+  - name: Asset Types
+    description: Asset type definitions and their variable associations
+  - name: Variable Definitions
+    description: Reusable definitions of variables associated with assets
+  - name: Service
+    description: Basic service endpoint
+paths:
+  /:
+    get:
+      tags: [Service]
+      operationId: getServiceGreeting
+      summary: Get the service greeting
+      responses:
+        "200":
+          description: Greeting returned by the service
+          content:
+            text/html:
+              schema:
+                type: string
+                example: Hello World!
+
+  /asset-types:
+    post:
+      tags: [Asset Types]
+      operationId: createAssetType
+      summary: Create an asset type
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAssetType"
+      responses:
+        "201":
+          description: Asset type created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetType"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          description: An asset type with this name already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      tags: [Asset Types]
+      operationId: listAssetTypes
+      summary: List asset types
+      responses:
+        "200":
+          description: Asset types
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AssetType"
+
+  /asset-types/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      tags: [Asset Types]
+      operationId: getAssetType
+      summary: Get an asset type
+      responses:
+        "200":
+          description: Asset type
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetType"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Asset Types]
+      operationId: updateAssetType
+      summary: Partially update an asset type
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAssetType"
+      responses:
+        "200":
+          description: Updated asset type
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetType"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: The updated name is already in use
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags: [Asset Types]
+      operationId: deleteAssetType
+      summary: Delete an asset type
+      description: Deletion is blocked while assets or variable associations reference this type.
+      responses:
+        "200":
+          description: Asset type deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Asset type is still referenced
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /asset-types/{assetTypeId}/variables:
+    parameters:
+      - name: assetTypeId
+        in: path
+        required: true
+        description: UUID of the asset type
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Asset Types]
+      operationId: listAssetTypeVariables
+      summary: List variables associated with an asset type
+      responses:
+        "200":
+          description: Variable associations for the asset type
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AssetTypeVariable"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      tags: [Asset Types]
+      operationId: addVariableToAssetType
+      summary: Associate a variable definition with an asset type
+      description: The required flag indicates whether the variable is required for assets of this type.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddAssetTypeVariable"
+      responses:
+        "201":
+          description: Variable association created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetTypeVariable"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          description: Asset type or variable definition not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: The variable is already associated with this asset type
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /asset-types/{assetTypeId}/variables/{variableDefinitionId}:
+    parameters:
+      - name: assetTypeId
+        in: path
+        required: true
+        description: UUID of the asset type
+        schema:
+          type: string
+          format: uuid
+      - name: variableDefinitionId
+        in: path
+        required: true
+        description: UUID of the variable definition
+        schema:
+          type: string
+          format: uuid
+    delete:
+      tags: [Asset Types]
+      operationId: removeVariableFromAssetType
+      summary: Remove a variable association from an asset type
+      responses:
+        "200":
+          description: Association deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: The association is still used by assets of this type
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /variables:
+    post:
+      tags: [Variable Definitions]
+      operationId: createVariableDefinition
+      summary: Create a variable definition
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateVariableDefinition"
+      responses:
+        "201":
+          description: Variable definition created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VariableDefinition"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          description: A variable definition with this name already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      tags: [Variable Definitions]
+      operationId: listVariableDefinitions
+      summary: List variable definitions
+      responses:
+        "200":
+          description: Variable definitions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VariableDefinition"
+
+  /variables/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      tags: [Variable Definitions]
+      operationId: getVariableDefinition
+      summary: Get a variable definition
+      responses:
+        "200":
+          description: Variable definition
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VariableDefinition"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Variable Definitions]
+      operationId: updateVariableDefinition
+      summary: Partially update a variable definition
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateVariableDefinition"
+      responses:
+        "200":
+          description: Updated variable definition
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VariableDefinition"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: The updated name is already in use
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags: [Variable Definitions]
+      operationId: deleteVariableDefinition
+      summary: Delete a variable definition
+      description: Deletion is blocked while any asset type or asset references this variable.
+      responses:
+        "200":
+          description: Variable definition deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Variable definition is still referenced
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /assets:
+    post:
+      tags: [Assets]
+      operationId: createAsset
+      summary: Create an asset
+      description: An asset type is required; parentAssetId is optional for root assets.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAsset"
+      responses:
+        "201":
+          description: Asset created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Asset"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          description: Asset type or parent asset not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      tags: [Assets]
+      operationId: listAssets
+      summary: List assets
+      responses:
+        "200":
+          description: Assets with asset type and parent asset relations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Asset"
+
+  /assets/hierarchy:
+    get:
+      tags: [Assets]
+      operationId: getAssetHierarchy
+      summary: Get the nested asset hierarchy
+      description: Returns root assets with recursively nested children and each asset's assigned variable definitions.
+      responses:
+        "200":
+          description: Hierarchy tree
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetHierarchy"
+
+  /assets/{assetId}/variables:
+    parameters:
+      - name: assetId
+        in: path
+        required: true
+        description: UUID of the asset
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Assets]
+      operationId: listAssetVariables
+      summary: List variable assignments for an asset
+      responses:
+        "200":
+          description: Variable assignments with their definitions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AssetVariable"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      tags: [Assets]
+      operationId: addVariableToAsset
+      summary: Assign a variable to an asset
+      description: The variable must be associated with the asset's current asset type. The service sets isCustom to false.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddAssetVariable"
+      responses:
+        "201":
+          description: Variable assignment created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetVariable"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          description: Asset or variable definition not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Variable is not defined for the asset type or is already assigned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /assets/{assetId}/variables/{variableDefinitionId}:
+    parameters:
+      - name: assetId
+        in: path
+        required: true
+        description: UUID of the asset
+        schema:
+          type: string
+          format: uuid
+      - name: variableDefinitionId
+        in: path
+        required: true
+        description: UUID of the variable definition
+        schema:
+          type: string
+          format: uuid
+    delete:
+      tags: [Assets]
+      operationId: removeVariableFromAsset
+      summary: Remove a variable assignment from an asset
+      responses:
+        "200":
+          description: Assignment deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /assets/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      tags: [Assets]
+      operationId: getAsset
+      summary: Get an asset
+      responses:
+        "200":
+          description: Asset with asset type and parent asset relations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Asset"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Assets]
+      operationId: updateAsset
+      summary: Partially update an asset
+      description: Changing the asset type is rejected if any assigned variable is unavailable for the new type. An asset cannot be its own parent.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAsset"
+      responses:
+        "200":
+          description: Updated asset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Asset"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          description: Asset, asset type, or parent asset not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Existing variable assignments are incompatible with the requested asset type
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags: [Assets]
+      operationId: deleteAsset
+      summary: Delete an asset
+      description: Deletion is blocked while the asset has child assets or assigned variables.
+      responses:
+        "200":
+          description: Asset deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Asset has child assets or assigned variables
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      description: UUID of the resource
+      schema:
+        type: string
+        format: uuid
+  responses:
+    BadRequest:
+      description: Invalid UUID or request body failed validation
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+  schemas:
+    Error:
+      type: object
+      description: NestJS HTTP exception response. Validation message may be an array.
+      properties:
+        statusCode:
+          type: integer
+          example: 400
+        message:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+          example: Resource not found
+        error:
+          type: string
+          example: Bad Request
+      required: [statusCode, message]
+    Message:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Resource deleted
+      required: [message]
+    CreateAssetType:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          maxLength: 100
+          example: MOTOR
+        description:
+          type: string
+          maxLength: 500
+          example: Industrial electric motor
+      required: [name]
+    UpdateAssetType:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: MOTOR
+        description:
+          type: string
+          maxLength: 500
+          example: Industrial electric motor
+    AssetType:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: MOTOR
+        description:
+          type: string
+          nullable: true
+          example: Industrial electric motor
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, name, createdAt, updatedAt]
+    CreateVariableDefinition:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          maxLength: 100
+          example: temperature
+        dataType:
+          type: string
+          maxLength: 50
+          example: FLOAT
+        unit:
+          type: string
+          maxLength: 20
+          example: °C
+        description:
+          type: string
+          maxLength: 20
+          example: Motor temperature
+      required: [name, dataType, unit]
+    UpdateVariableDefinition:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: temperature
+        dataType:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: FLOAT
+        unit:
+          type: string
+          maxLength: 100
+          example: °C
+        description:
+          type: string
+          maxLength: 500
+          example: Motor temperature
+    VariableDefinition:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: temperature
+        dataType:
+          type: string
+          example: FLOAT
+        unit:
+          type: string
+          example: °C
+        description:
+          type: string
+          nullable: true
+          example: Motor temperature
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, name, dataType, unit, createdAt, updatedAt]
+    AddAssetTypeVariable:
+      type: object
+      additionalProperties: false
+      properties:
+        variableDefinitionId:
+          type: string
+          format: uuid
+        required:
+          type: boolean
+          example: true
+      required: [variableDefinitionId, required]
+    AssetTypeVariable:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        required:
+          type: boolean
+        assetType:
+          $ref: "#/components/schemas/AssetType"
+        variableDefinition:
+          $ref: "#/components/schemas/VariableDefinition"
+      required: [id, required, assetType, variableDefinition]
+    CreateAsset:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          maxLength: 100
+          example: Motor-001
+        assetTypeId:
+          type: string
+          format: uuid
+        description:
+          type: string
+          maxLength: 500
+          example: Main production motor
+        location:
+          type: string
+          maxLength: 200
+          example: Building A, Line 1
+        parentAssetId:
+          type: string
+          format: uuid
+          description: Omit to create a root asset
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Flexible descriptive metadata; not for variable definitions or telemetry readings.
+          example:
+            manufacturer: Example Industries
+            model: MX-200
+      required: [name, assetTypeId]
+    UpdateAsset:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: Motor-001
+        assetTypeId:
+          type: string
+          format: uuid
+        description:
+          type: string
+          maxLength: 500
+          example: Main production motor
+        location:
+          type: string
+          maxLength: 200
+          example: Building A, Line 1
+        parentAssetId:
+          type: string
+          format: uuid
+          description: Set to a parent asset UUID; self-parenting is rejected.
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Flexible descriptive metadata; not for variable definitions or telemetry readings.
+    Asset:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Motor-001
+        assetType:
+          $ref: "#/components/schemas/AssetType"
+        parentAsset:
+          allOf:
+            - $ref: "#/components/schemas/AssetParent"
+          nullable: true
+          description: Null or absent for a root asset.
+        description:
+          type: string
+          nullable: true
+          example: Main production motor
+        location:
+          type: string
+          nullable: true
+          example: Building A, Line 1
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, name, assetType, createdAt, updatedAt]
+    AssetParent:
+      type: object
+      description: Parent asset relation returned with asset detail and list responses.
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+      required: [id, name]
+    AddAssetVariable:
+      type: object
+      additionalProperties: false
+      properties:
+        variableDefinitionId:
+          type: string
+          format: uuid
+      required: [variableDefinitionId]
+    AssetVariable:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        isCustom:
+          type: boolean
+          description: Currently false for assignments created through this API.
+          example: false
+        asset:
+          allOf:
+            - $ref: "#/components/schemas/Asset"
+          description: Included in the response when the assignment is created; list responses omit this relation.
+        variableDefinition:
+          $ref: "#/components/schemas/VariableDefinition"
+      required: [id, isCustom, variableDefinition]
+    AssetHierarchy:
+      type: object
+      properties:
+        roots:
+          type: array
+          items:
+            $ref: "#/components/schemas/AssetHierarchyNode"
+      required: [roots]
+    AssetHierarchyNode:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        assetType:
+          $ref: "#/components/schemas/AssetHierarchyType"
+        variables:
+          type: array
+          items:
+            $ref: "#/components/schemas/AssetHierarchyVariable"
+        children:
+          type: array
+          items:
+            $ref: "#/components/schemas/AssetHierarchyNode"
+      required: [id, name, assetType, variables, children]
+    AssetHierarchyType:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+      required: [id, name]
+    AssetHierarchyVariable:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        dataType:
+          type: string
+        unit:
+          type: string
+      required: [id, name, dataType, unit]

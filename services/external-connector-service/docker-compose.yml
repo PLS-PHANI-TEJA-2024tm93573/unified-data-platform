@@ -1,0 +1,17 @@
+services:
+  nats:
+    image: nats:2.10-alpine
+    container_name: external-connector-nats
+    ports:
+      - "4222:4222"
+
+  external-connector-service:
+    build:
+      context: .
+    container_name: external-connector-service
+    depends_on:
+      - nats
+    environment:
+      NATS_URL: nats://nats:4222
+      CONFIG_PATH: /app/asset-config.json
+    restart: unless-stopped
