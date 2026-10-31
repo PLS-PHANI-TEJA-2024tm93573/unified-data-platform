@@ -1,0 +1,39 @@
+<p-dialog 
+  [(visible)]="display" 
+  [header]="selectedAssetName ? 'Variables - ' + selectedAssetName : 'Asset Variables'"
+  [modal]="true" 
+  [style]="{ width: '50vw' }"
+  [draggable]="false" 
+  [resizable]="false"
+  (onHide)="onClose()">
+
+  <p-table [value]="variables" [tableStyle]="{ 'min-width': '30rem' }">
+    <ng-template pTemplate="header">
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Data Type</th>
+        <th>Unit</th>
+      </tr>
+    </ng-template>
+    
+    <ng-template pTemplate="body" let-variable>
+      <tr>
+        <td>{{ variable.id }}</td>
+        <td>{{ variable.variableDefinition.name }}</td>
+        <td>{{ variable.variableDefinition.dataType }}</td>
+        <td>{{ variable.variableDefinition.unit || '-' }}</td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="3" class="text-center">No variables found for this asset.</td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <ng-template pTemplate="footer">
+
+  </ng-template>
+</p-dialog>

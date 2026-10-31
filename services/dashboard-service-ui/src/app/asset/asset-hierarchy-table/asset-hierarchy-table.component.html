@@ -7,8 +7,9 @@
   <ng-template pTemplate="header">
     <tr>
       <th>Asset Name</th>
-      <th>Status</th>
-      <th>Location</th>
+      <th>Variables</th>
+
+      <!-- <th>Location</th> -->
     </tr>
   </ng-template>
   <ng-template pTemplate="body" let-rowNode let-rowData="rowData">
@@ -18,8 +19,26 @@
         <p-treeTableToggler [rowNode]="rowNode"></p-treeTableToggler>
         {{ rowData.name }}
       </td>
-      <td>{{ rowData.status }}</td>
-      <td>{{ rowData.location }}</td>
+      <!-- <td>{{ rowData.id }}</td> -->
+       @if(rowData.variables.length > 0) {
+         <td><p-button 
+                icon="pi pi-eye" 
+                [rounded]="true" 
+                [text]="true"
+                severity="secondary"
+                (click)="openVariablesModal(rowData.id, rowData.name)"
+                 /></td>
+       }
+       @else{
+        <td></td>
+       }
     </tr>
   </ng-template>
 </p-treeTable>
+
+<app-asset-variable-dialog
+  [(display)]="isVariableDialogVisible"
+  [selectedAssetName]="selectedAssetName"
+  [variables]="selectedAssetVariables || []"
+
+></app-asset-variable-dialog>

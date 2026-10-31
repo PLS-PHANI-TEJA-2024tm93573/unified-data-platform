@@ -412,8 +412,25 @@ export class AssetService {
       }
     }
 
-    return {
-      roots,
-    };
+    // return {
+    //   roots,
+    // };
+    return this.mapToPrimeNgTreeNodes(roots)
   }
+
+ private mapToPrimeNgTreeNodes(nodes: AssetHierarchyNode[]): any[] {
+  return nodes.map((node) => ({
+    key: node.id,
+    label: node.name,
+    expanded: true,
+    data: {
+      id: node.id,
+      name: node.name,
+      assetType: node.assetType,
+      variables: node.variables,
+    },
+    children: node.children?.length ? this.mapToPrimeNgTreeNodes(node.children) : [],
+  }));
+}
+
 }
