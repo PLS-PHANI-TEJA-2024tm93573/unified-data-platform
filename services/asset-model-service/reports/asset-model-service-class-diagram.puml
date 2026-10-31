@@ -1,0 +1,107 @@
+@startuml Asset Model Service Class Diagram
+
+hide circle
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+
+package "Asset Model Domain" {
+  class AssetType {
+    +id: UUID
+    +name: string <<unique>>
+    +description: string?
+    +createdAt: Date
+    +updatedAt: Date
+  }
+
+  class VariableDefinition {
+    +id: UUID
+    +name: string <<unique>>
+    +dataType: string
+    +unit: string
+    +description: string?
+    +createdAt: Date
+    +updatedAt: Date
+  }
+
+  class AssetTypeVariable {
+    +id: UUID
+    +required: boolean
+    +assetType: AssetType
+    +variableDefinition: VariableDefinition
+    .. unique(assetType, variableDefinition) ..
+  }
+
+  class Asset {
+    +id: UUID
+    +name: string
+    +assetType: AssetType
+    +parentAsset: Asset?
+    +children: Asset[]
+    +description: string?
+    +location: string?
+    +metadata: JSONB?
+    +createdAt: Date
+    +updatedAt: Date
+  }
+
+  class AssetVariable {
+    +id: UUID
+    +asset: Asset
+    +variableDefinition: VariableDefinition
+    +isCustom: boolean
+    .. unique(asset, variableDefinition) ..
+  }
+}
+
+package "Application Layer" {
+  class AssetTypeService <<service>>
+  class VariableDefinitionService <<service>>
+  class AssetService <<service>>
+}
+
+package "Interface Layer" {
+  class AssetTypeController <<controller>>
+  class VariableDefinitionController <<controller>>
+  class AssetController <<controller>>
+  class AssetGrpcController <<controller>>
+}
+
+package "Infrastructure" {
+  class TypeORM <<persistence>>
+  database PostgreSQL
+}
+
+AssetType "1" -- "0..*" Asset : assetType
+AssetType "1" -- "0..*" AssetTypeVariable : variables
+VariableDefinition "1" -- "0..*" AssetTypeVariable : type associations
+Asset "0..1" -- "0..*" Asset : parent / children
+Asset "1" -- "0..*" AssetVariable : assigned variables
+VariableDefinition "1" -- "0..*" AssetVariable : definitions
+
+AssetTypeController ..> AssetTypeService
+VariableDefinitionController ..> VariableDefinitionService
+AssetController ..> AssetService
+AssetGrpcController ..> AssetService
+
+AssetTypeService ..> TypeORM
+VariableDefinitionService ..> TypeORM
+AssetService ..> TypeORM
+TypeORM ..> PostgreSQL
+
+note right of AssetTypeVariable
+  Association entity carries
+  the required flag.
+end note
+
+note right of AssetVariable
+  Association entity carries
+  the isCustom flag.
+end note
+
+note bottom of Asset
+  Asset.metadata is descriptive JSONB.
+  Telemetry measurements are outside
+  the Asset Model Service.
+end note
+
+@enduml

@@ -1,37 +1,23 @@
-@import '../node_modules/bootstrap/scss/bootstrap';
-@import '../node_modules/bootstrap-icons/font/bootstrap-icons.css';
+@import "primeicons/primeicons.css";
 
+/* src/styles.css */
+
+/* 1. Import your custom font (e.g., Inter or Roboto from Google Fonts) */
+@import url('https://fonts.google.com/share?selection.family=Akaya+Kanadaka|Fira+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900|Montserrat:ital,wght@0,100..900;1,100..900');
+
+/* 2. Override PrimeNG font design tokens globally */
 :root {
-  color-scheme: dark;
-  --bs-body-bg: #0b1220;
-  --bs-body-bg-rgb: 11, 18, 32;
-  --bs-body-color: #e5edf7;
-  --bs-body-color-rgb: 229, 237, 247;
-  --bs-secondary-color: #94a3b8;
-  --bs-tertiary-bg: #111827;
-  --bs-border-color: #1f2937;
-  --bs-primary: #60a5fa;
-  --bs-primary-rgb: 96, 165, 250;
-  --bs-dark: #0b1220;
-  --bs-dark-rgb: 11, 18, 32;
+  --p-font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --p-font-size: 14px;
 }
 
 html, body {
   margin: 0;
+  padding: 0;
   min-height: 100%;
-  font-family: 'Segoe UI', sans-serif;
-  background: var(--bs-body-bg);
-  color: var(--bs-body-color);
-}
-
-* {
-  box-sizing: border-box;
+  font-family: Arial, sans-serif;
 }
 
 body {
   min-height: 100vh;
-}
-
-a {
-  color: inherit;
 }
