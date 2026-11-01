@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
   selector: 'app-configure-child',
@@ -7,5 +7,18 @@ import { Component } from '@angular/core';
   styleUrl: './configure-child.component.scss'
 })
 export class ConfigureChildComponent {
+
+  @Input() displayDialog: boolean = false;
+  @Output() displayDialogChange = new EventEmitter<boolean>();
+
+
+
+  onSubmit(){
+    this.onCloseDialog();
+  }
+
+  onCloseDialog(){
+    this.displayDialogChange.emit(false)
+  }
 
 }

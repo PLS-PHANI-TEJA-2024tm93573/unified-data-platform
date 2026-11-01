@@ -16,3 +16,11 @@
     margin-bottom: 0.5rem;
     justify-content: space-between;
 }
+
+.configure-header{
+    display: flex;
+    gap: 0.5rem;
+    ::ng-deep p-button{
+        margin-top:10px;
+    }
+}

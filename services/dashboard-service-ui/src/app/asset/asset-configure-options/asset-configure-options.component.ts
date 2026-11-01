@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AssetService } from 'src/app/services/asset-service.service';
 import { AssetDetails } from 'src/interfaces/asset-details';
 
@@ -13,9 +13,11 @@ export class AssetConfigureOptionsComponent implements OnInit {
 
   assetId: string ='';
   assetDetails!: AssetDetails;
+  configureChildDialog: boolean = false;
 
   constructor(
       private route: ActivatedRoute,
+      private readonly router: Router,
       private readonly assetService: AssetService
     ){
 
@@ -32,6 +34,15 @@ export class AssetConfigureOptionsComponent implements OnInit {
     });
 
     
+  }
+
+  navigatePrevious() {
+    this.router.navigate(['../'], { relativeTo: this.route });
+  }
+
+  openChildAssetDialog(assetId: string) {
+    console.log(this.configureChildDialog)
+    this.configureChildDialog = true;
   }
 
 

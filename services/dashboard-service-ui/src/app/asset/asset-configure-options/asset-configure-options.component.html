@@ -1,18 +1,32 @@
 
-
-<h3 class="text-3xl font-bold text-surface-900 dark:text-surface-0 m-0">
+<div class="configure-header">
+    <p-button  
+        icon="pi pi-chevron-left"
+        [rounded]="true"
+        [text]="true"
+        severity="secondary"
+        (click)="navigatePrevious()" />
+    <h3 class="text-3xl font-bold text-surface-900 dark:text-surface-0 m-0">
   Confiugre Asset 
 </h3>
+
+</div>
+
 <p-fieldset [legend]="assetDetails.name">
     <div class="configure-asset-buttons">
-        <p-button label="Add Child Asset" icon="pi pi-user" severity="secondary" />
+        <p-button 
+            label="Add Child Asset" 
+            icon="pi pi-user" 
+            severity="secondary" 
+            (click) = "openChildAssetDialog(assetDetails.id)"
+            />
         <p-button label="Add Variables" icon="pi pi-gauge"  severity="secondary"/>
     </div>
     <div class="configure-asset-details">
         <div class="asset-details">
             <span>Asset ID: </span>
          <span>
-             {{assetDetails.id}}
+             {{assetDetails.id}} 
         </span>
         </div>
 
@@ -41,3 +55,7 @@
         
     </div>
 </p-fieldset>
+
+<app-configure-child
+    [(displayDialog)]="configureChildDialog"
+></app-configure-child>
