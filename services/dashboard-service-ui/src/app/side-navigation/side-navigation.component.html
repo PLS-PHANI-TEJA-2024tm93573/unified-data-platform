@@ -15,12 +15,8 @@
   <aside class="mini-sidebar" [class.collapsed]="isCollapsed">
     <!-- Sidebar Header with Collapse Button -->
     <div class="sidebar-header">
-      <p-button 
-        [icon]="isCollapsed ? 'pi pi-angle-right' : 'pi pi-angle-left'" 
-        [text]="true" 
-        (onClick)="toggleSidebar()"
-        aria-label="Toggle Sidebar"
-        styleClass="toggle-btn">
+      <p-button [icon]="isCollapsed ? 'pi pi-angle-right' : 'pi pi-angle-left'" [text]="true"
+        (onClick)="toggleSidebar()" aria-label="Toggle Sidebar" styleClass="toggle-btn">
       </p-button>
       <span class="header-title" *ngIf="!isCollapsed">Navigation</span>
     </div>
@@ -29,15 +25,12 @@
     <p-divider styleClass="sidebar-divider"></p-divider>
 
     <!-- Menu List -->
-    <div class="menu-list">
-      <div 
-        *ngFor="let item of navItems" 
-        class="menu-item"
-        [title]="isCollapsed ? item.label : ''">
-        
-        <i [class]="item.icon" class="item-icon"></i>
-        <span class="item-label" *ngIf="!isCollapsed">{{ item.label }}</span>
-      </div>
+    <div class="sidebar-menu">
+      <p-panelMenu
+        [ngClass] ="{'toggle-panel-label': isCollapsed }"
+        [model]="navItems" 
+        [multiple]="false">
+      </p-panelMenu>
     </div>
   </aside>
 

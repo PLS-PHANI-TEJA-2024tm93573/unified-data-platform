@@ -341,7 +341,7 @@ export class AssetService {
     return { message: 'Asset variable association deleted' };
   }
 
-  async getAssetHierarchy() {
+  async getAssetHierarchy(isGrpc: boolean) {
     const [assets, assetVariables] = await Promise.all([
       this.assetRepository.find({
         relations: {
@@ -415,7 +415,7 @@ export class AssetService {
     // return {
     //   roots,
     // };
-    return this.mapToPrimeNgTreeNodes(roots)
+    return  isGrpc ? { roots } : this.mapToPrimeNgTreeNodes(roots)
   }
 
  private mapToPrimeNgTreeNodes(nodes: AssetHierarchyNode[]): any[] {

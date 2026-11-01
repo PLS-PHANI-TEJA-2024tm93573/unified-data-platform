@@ -34,7 +34,8 @@ export class AssetController {
   @Get('hierarchy')
   @ApiOkResponse({ type: AssetHierarchyResponseDto })
   getAssetHierarchy() {
-    return this.assetService.getAssetHierarchy();
+    const isGrpc = false;
+    return this.assetService.getAssetHierarchy(isGrpc);
   }
 
   @Get(':assetId/variables')
