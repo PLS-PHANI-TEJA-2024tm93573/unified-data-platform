@@ -24,4 +24,9 @@ export class AssetService {
       tap((response) => console.log('Asset variables response:', response))
     );
   }
+
+
+  getAssetDetails(assetId:string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/assets/${assetId}`)
+  }
 }

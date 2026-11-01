@@ -38,12 +38,16 @@ export class SideNavigationComponent implements OnInit {
           {
             label: 'Hierarchy',
             icon: 'pi pi-sitemap',
-            routerLink: '/assets/hierarchy'
+            routerLink: '/asset/hierarchy',
+            command: () => this.router.navigate(['/asset/hierarchy'])
           },
           {
             label: 'Configure',
             icon: 'pi pi-cog',
-            routerLink: '/assets/configure'
+            command: () => {
+              console.log("clicked")
+              this.router.navigate(['/asset/configure'])
+            }
           }
         ]
       },

@@ -1,0 +1,61 @@
+<p-treeTable [value]="assetTreeHierarchy">
+  <ng-template pTemplate="header">
+    <tr>
+      <th>Asset Name</th>
+      <th>Variables</th>
+      <th></th>
+      <th></th>
+      <th>
+        <!-- <p-button  icon="pi pi-cog" severity="secondary" /> -->
+        <!-- <p-button label="Add Child" icon="pi pi-plus" severity="secondary" />
+        <p-button label="Add Child" icon="pi pi-plus" severity="secondary" /> -->
+      </th>
+      <th>
+        <!-- <p-button label="Add Child" icon="pi pi-plus" severity="secondary" /> -->
+      </th>
+
+      <!-- <th>Location</th> -->
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="body" let-rowNode let-rowData="rowData">
+    <tr [ttRow]="rowNode">
+      <td>
+        <!-- Toggler renders the expand/collapse arrow -->
+        <p-treeTableToggler [rowNode]="rowNode"></p-treeTableToggler>
+        {{ rowData.name }}
+      </td>
+      <!-- <td>{{ rowData.id }}</td> -->
+       @if(rowData.variables.length > 0) {
+         <td><p-button 
+                icon="pi pi-eye" 
+                [rounded]="true" 
+                [text]="true"
+                severity="secondary"
+                (click)="openVariablesModal(rowData.id, rowData.name)"
+                 /></td>
+       }
+       @else{
+        <td></td>
+       }
+       <td>
+        <!-- Add Child button -->
+        <p-button  
+            icon="pi pi-cog" 
+            severity="secondary"
+            (click)="configureAsset(rowData.id)"
+         />
+       </td>
+       <td>
+        <!-- <p-button label="Configure Variables" icon="pi pi-gauge" severity="secondary" /> -->
+       </td>
+       <td></td>
+    </tr>
+  </ng-template>
+</p-treeTable>
+
+<app-asset-variable-dialog
+  [(display)]="isVariableDialogVisible"
+  [selectedAssetName]="selectedAssetName"
+  [variables]="selectedAssetVariables || []"
+
+></app-asset-variable-dialog>
