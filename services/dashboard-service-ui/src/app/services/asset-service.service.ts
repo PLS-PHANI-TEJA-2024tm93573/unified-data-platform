@@ -36,6 +36,16 @@ export class AssetService {
 
   }
 
+  getAssetTypeVariables(assetTypeId: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/asset-types/${assetTypeId}/variables`);
+  }
+
+  addAssetVariable(assetId: string, variableDefinitionId: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/assets/${assetId}/variables`, {
+      variableDefinitionId,
+    });
+  }
+
   createAsset(asset: {
     name: string;
     assetTypeId: string;

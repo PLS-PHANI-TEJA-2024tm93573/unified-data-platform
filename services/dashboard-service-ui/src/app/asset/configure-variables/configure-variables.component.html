@@ -9,6 +9,15 @@
   (onHide)="onCloseDialog()">
 
   <div class="py-4">
+    <div class="flex justify-end mb-3">
+      <p-button
+        label="Add"
+        icon="pi pi-plus"
+        variant="outlined"
+        severity="contrast"
+        (click)="openAddVariableDialog()" />
+    </div>
+
     <p-table
       [value]="assetVariables"
       [paginator]="true"
@@ -77,3 +86,9 @@
     </div>
   </ng-template>
 </p-dialog>
+
+<app-add-variable-dialog
+  [(displayDialog)]="addVariableDialog"
+  [assetId]="assetId"
+  (variableAdded)="loadAssetVariables()">
+</app-add-variable-dialog>

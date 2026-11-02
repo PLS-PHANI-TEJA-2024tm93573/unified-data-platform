@@ -26,6 +26,7 @@ import { AssetConfigureOptionsComponent } from './asset-configure-options/asset-
 import { ConfigureChildComponent } from './configure-child/configure-child.component';
 import { ConfigureVariablesComponent } from './configure-variables/configure-variables.component';
 import { AddChildDialogComponent } from './add-child-dialog/add-child-dialog.component';
+import { AddVariableDialogComponent } from './add-variable-dialog/add-variable-dialog.component';
 import { InputTextModule } from 'primeng/inputtext';
 
 @NgModule({
@@ -37,7 +38,8 @@ import { InputTextModule } from 'primeng/inputtext';
     AssetConfigureOptionsComponent,
     ConfigureChildComponent,
     ConfigureVariablesComponent,
-    AddChildDialogComponent
+    AddChildDialogComponent,
+    AddVariableDialogComponent
   ],
   imports: [
     CommonModule,

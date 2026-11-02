@@ -1,0 +1,68 @@
+<p-dialog
+  header="Add Variable"
+  [(visible)]="displayDialog"
+  [modal]="true"
+  [style]="{ width: '650px', minHeight: '320px', maxHeight: '90vh' }"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="p-fluid"
+  (onShow)="loadAvailableVariables()"
+  (onHide)="hideDialog()">
+
+  <form [formGroup]="variableForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-4 mt-2">
+    <div class="flex flex-col gap-1">
+      <label for="variableDefinitionId" class="font-medium text-sm">Variable *</label>
+      <p-select
+        id="variableDefinitionId"
+        formControlName="variableDefinitionId"
+        [options]="availableVariables"
+        optionLabel="variableDefinition.name"
+        optionValue="variableDefinition.id"
+        appendTo="body"
+        placeholder="Select a variable"
+        [loading]="loading"
+        [ngClass]="{ 'ng-invalid ng-dirty': variableForm.get('variableDefinitionId')?.invalid && variableForm.get('variableDefinitionId')?.touched }">
+      </p-select>
+      <small
+        *ngIf="variableForm.get('variableDefinitionId')?.invalid && variableForm.get('variableDefinitionId')?.touched"
+        class="text-red-500">
+        Select a variable.
+      </small>
+      <small *ngIf="!loading && availableVariables.length === 0" class="text-surface-500">
+        No additional variables are available for this asset type.
+      </small>
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label for="variableId" class="font-medium text-sm">Variable ID</label>
+      <input
+        id="variableId"
+        type="text"
+        pInputText
+        formControlName="variableId" />
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label for="unit" class="font-medium text-sm">Unit</label>
+      <input
+        id="unit"
+        type="text"
+        pInputText
+        formControlName="unit" />
+    </div>
+
+    <div class="flex justify-end gap-2 mt-2">
+      <p-button
+        label="Cancel"
+        severity="secondary"
+        [text]="true"
+        (onClick)="hideDialog()" />
+      <p-button
+        label="Save"
+        icon="pi pi-check"
+        type="submit"
+        [loading]="saving"
+        [disabled]="variableForm.invalid || availableVariables.length === 0" />
+    </div>
+  </form>
+</p-dialog>

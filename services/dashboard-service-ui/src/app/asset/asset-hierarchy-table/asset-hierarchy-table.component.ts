@@ -29,6 +29,7 @@ export class AssetHierarchyTableComponent implements OnInit {
     this.assetService.getAssetHierarchy().subscribe((response)=>{
       this.assetHierarchy = [...response]
     })
+    console.log(this.assetHierarchy)
   }
 
   // assetHierarchy: TreeNode[] = [

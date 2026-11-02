@@ -14,14 +14,23 @@ export class ConfigureVariablesComponent implements OnInit {
   @Output() displayDialogChange = new EventEmitter<boolean>();
 
   assetVariables: any[] = [];
+  addVariableDialog = false;
 
   constructor(private readonly assetService: AssetService) {
   }
 
   ngOnInit(): void {
+    this.loadAssetVariables();
+  }
+
+  loadAssetVariables(): void {
     this.assetService.getVaraiblesbyAssetId(this.assetId).subscribe((variablesResponse) => {
       this.assetVariables = [...variablesResponse];
     });
+  }
+
+  openAddVariableDialog(): void {
+    this.addVariableDialog = true;
   }
 
   onSubmit(): void {
