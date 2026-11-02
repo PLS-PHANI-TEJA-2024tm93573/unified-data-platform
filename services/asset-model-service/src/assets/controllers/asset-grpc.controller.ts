@@ -10,7 +10,8 @@ export class AssetGrpcController {
 
     @GrpcMethod('AssetModelService','GetAssetHierarchy')
     async getAssetHierarchy() {
-        return this.assetService.getAssetHierarchy();
+        const isGrpc = true;
+        return this.assetService.getAssetHierarchy(isGrpc);
     }
     
 }

@@ -341,7 +341,7 @@ export class AssetService {
     return { message: 'Asset variable association deleted' };
   }
 
-  async getAssetHierarchy() {
+  async getAssetHierarchy(isGrpc: boolean) {
     const [assets, assetVariables] = await Promise.all([
       this.assetRepository.find({
         relations: {
@@ -412,8 +412,49 @@ export class AssetService {
       }
     }
 
-    return {
-      roots,
-    };
+    // return {
+    //   roots,
+    // };
+    return  isGrpc ? { roots } : this.mapToPrimeNgTreeNodes(roots)
+  }
+
+ private mapToPrimeNgTreeNodes(nodes: AssetHierarchyNode[]): any[] {
+  return nodes.map((node) => ({
+    key: node.id,
+    label: node.name,
+    expanded: true,
+    data: {
+      id: node.id,
+      name: node.name,
+      assetType: node.assetType,
+      variables: node.variables,
+    },
+    children: node.children?.length ? this.mapToPrimeNgTreeNodes(node.children) : [],
+  }));
+}
+
+
+  async getChildAssets(assetId:string) {
+    const parentAsset = await this.assetRepository.findOne({
+      where: {
+        id: assetId
+      },
+    });
+
+    if (!parentAsset) {
+      throw new NotFoundException(
+        `Asset with ID ${assetId} not found`,
+      );
+    }
+
+    const children = await this.assetRepository
+      .createQueryBuilder('asset')
+      .leftJoinAndSelect('asset.assetType', 'assetType')
+      .leftJoinAndSelect('asset.parentAsset', 'parentAsset')
+      .where('parentAsset.id = :assetId', { assetId })
+      .getMany();
+
+    return children;
+
   }
 }

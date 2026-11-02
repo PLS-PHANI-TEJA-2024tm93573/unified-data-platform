@@ -96,3 +96,29 @@
   background-color: var(--p-surface-900, #111827);
   color: var(--p-surface-0, #ffffff);
 }
+
+::ng-deep p-panelmenu {
+  .p-panelmenu-panel {
+    border:none;
+    background-color: var(--p-surface-800);
+  }
+  
+}
+
+
+::ng-deep .toggle-panel-label {
+  .p-panelmenu-panel {
+    .p-panelmenu-header-label {
+      display: none
+    }
+
+    chevronrighticon  {
+      display: none;
+    }
+
+    // p-panelmenu-sub {
+    //   display:none
+    // }
+
+  }
+}

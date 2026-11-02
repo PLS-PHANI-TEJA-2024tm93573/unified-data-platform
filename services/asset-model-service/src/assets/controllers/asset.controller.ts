@@ -34,7 +34,8 @@ export class AssetController {
   @Get('hierarchy')
   @ApiOkResponse({ type: AssetHierarchyResponseDto })
   getAssetHierarchy() {
-    return this.assetService.getAssetHierarchy();
+    const isGrpc = false;
+    return this.assetService.getAssetHierarchy(isGrpc);
   }
 
   @Get(':assetId/variables')
@@ -46,6 +47,15 @@ export class AssetController {
   getAsssetById(@Param('id', ParseUUIDPipe) id: string) {
     return this.assetService.getAssetById(id);
   }
+
+  @Get(':assetId/children')
+  getChildAssets(
+    @Param('assetId', ParseUUIDPipe) assetId: string,
+  ){
+    console.log(assetId);
+    return this.assetService.getChildAssets(assetId)
+  }
+
 
   @Patch(':id')
   update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateAssetDto) {

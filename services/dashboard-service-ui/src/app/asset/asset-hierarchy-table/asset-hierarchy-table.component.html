@@ -4,13 +4,16 @@
 </div> -->
 
 <p-treeTable [value]="assetHierarchy">
-  <ng-template pTemplate="header">
-    <tr>
-      <th>Asset Name</th>
-      <th>Status</th>
-      <th>Location</th>
-    </tr>
-  </ng-template>
+  @if (assetHierarchy.length > 0) {
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Asset Name</th>
+        <th>Variables</th>
+
+        <!-- <th>Location</th> -->
+      </tr>
+    </ng-template>
+  }
   <ng-template pTemplate="body" let-rowNode let-rowData="rowData">
     <tr [ttRow]="rowNode">
       <td>
@@ -18,8 +21,44 @@
         <p-treeTableToggler [rowNode]="rowNode"></p-treeTableToggler>
         {{ rowData.name }}
       </td>
-      <td>{{ rowData.status }}</td>
-      <td>{{ rowData.location }}</td>
+      <!-- <td>{{ rowData.id }}</td> -->
+       @if(rowData.variables.length > 0) {
+         <td><p-button 
+                icon="pi pi-eye" 
+                [rounded]="true" 
+                [text]="true"
+                severity="secondary"
+                (click)="openVariablesModal(rowData.id, rowData.name)"
+                 /></td>
+       }
+       @else{
+        <td></td>
+       }
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="emptymessage">
+    <tr class="border-none">
+      <td colspan="2" class="border-none">
+        <div class="flex flex-column align-items-center justify-content-center gap-4 p-6 text-center">
+          <div class="flex align-items-center gap-2 text-color-secondary">
+            <i class="pi pi-inbox text-2xl"></i>
+            <span>No assets found.</span>
+          </div>
+          <p-button label="Add asset" icon="pi pi-plus" iconPos="top" (onClick)="addChildDialog = true" />
+        </div>
+      </td>
     </tr>
   </ng-template>
 </p-treeTable>
+
+<app-add-child-dialog
+  [(addChildDialogModal)]="addChildDialog"
+  (assetCreated)="loadAssetHierarchy()">
+</app-add-child-dialog>
+
+<app-asset-variable-dialog
+  [(display)]="isVariableDialogVisible"
+  [selectedAssetName]="selectedAssetName"
+  [variables]="selectedAssetVariables || []"
+
+></app-asset-variable-dialog>

@@ -1,0 +1,109 @@
+<p-dialog
+  header="Add New Asset"
+  [(visible)]="addChildDialogModal"
+  [modal]="true"
+  [style]="{ width: '450px' }"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="p-fluid"
+  (onHide)="hideDialog()"
+  >
+
+  <form [formGroup]="assetForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-4 mt-2">
+
+    <!-- Parent Asset (Disabled) -->
+    <div class="flex flex-col gap-1">
+      <label for="parentAsset" class="font-medium text-sm">Parent Asset *</label>
+      <input
+        id="parentAsset"
+        type="text"
+        pInputText
+        formControlName="parentAsset" />
+    </div>
+
+    <!-- Asset Type Dropdown -->
+    <div class="flex flex-col gap-1">
+      <label for="assetType" class="font-medium text-sm">Asset Type *</label>
+      <p-select
+        id="assetType"
+        formControlName="assetType"
+        [options]="availableAssetTypes"
+        optionLabel="name"
+        optionValue="id"
+        placeholder="Select Asset Type"
+        [ngClass]="{ 'ng-invalid ng-dirty': assetForm.get('assetType')?.invalid && assetForm.get('assetType')?.touched }">
+      </p-select>
+      <small
+        *ngIf="assetForm.get('assetType')?.invalid && assetForm.get('assetType')?.touched"
+        class="text-red-500">
+        Asset Type is required.
+      </small>
+    </div>
+
+    <!-- Selected Asset Type ID -->
+    <div class="flex flex-col gap-1">
+      <label for="assetTypeId" class="font-medium text-sm">Asset Type ID</label>
+      <input
+        id="assetTypeId"
+        type="text"
+        pInputText
+        formControlName="assetTypeId"
+        />
+    </div>
+
+    <!-- Asset Name Text Input -->
+    <div class="flex flex-col gap-1">
+      <label for="name" class="font-medium text-sm">Asset Name *</label>
+      <input
+        id="name"
+        type="text"
+        pInputText
+        formControlName="name"
+        placeholder="Enter asset name"
+        [ngClass]="{ 'ng-invalid ng-dirty': assetForm.get('name')?.invalid && assetForm.get('name')?.touched }" />
+      <small
+        *ngIf="assetForm.get('name')?.invalid && assetForm.get('name')?.touched"
+        class="text-red-500">
+        Asset name is required.
+      </small>
+    </div>
+
+    <!-- Location (Optional) -->
+    <div class="flex flex-col gap-1">
+      <label for="location" class="font-medium text-sm">Location</label>
+      <input
+        id="location"
+        type="text"
+        pInputText
+        formControlName="location"
+        placeholder="Enter location" />
+    </div>
+
+    <!-- Description (Optional) -->
+    <div class="flex flex-col gap-1">
+      <label for="description" class="font-medium text-sm">Description</label>
+      <input
+        id="description"
+        type="text"
+        pInputText
+        formControlName="description"
+        placeholder="Enter description" />
+    </div>
+
+    <!-- Footer Actions -->
+    <div class="flex justify-end gap-2 mt-4">
+      <p-button
+        label="Cancel"
+        severity="secondary"
+        [text]="true"
+        (onClick)="hideDialog()">
+      </p-button>
+      <p-button
+        label="Save Asset"
+        type="submit"
+        [disabled]="assetForm.invalid">
+      </p-button>
+    </div>
+
+  </form>
+</p-dialog>

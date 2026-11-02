@@ -3,22 +3,61 @@ import { CommonModule } from '@angular/common';
 import { AssetRootComponent } from './asset-root/asset-root.component';
 import { DividerModule } from 'primeng/divider';
 import { TreeTableModule } from 'primeng/treetable';
+import { TableModule } from 'primeng/table';
+import { DialogModule } from 'primeng/dialog';
+import { PanelModule } from 'primeng/panel'
+import { MenuModule} from 'primeng/menu';
+import { CardModule } from 'primeng/card';
+import { ChipModule } from 'primeng/chip';
+import { TagModule } from 'primeng/tag';
+import { FieldsetModule } from 'primeng/fieldset'
+import { SelectModule } from 'primeng/select';
+
+
 
 import { AssetHierarchyTableComponent } from './asset-hierarchy-table/asset-hierarchy-table.component';
 import { ButtonModule } from 'primeng/button';
+import { AssetVariableDialogComponent } from './asset-variable-dialog/asset-variable-dialog.component';
+import { AssetConfigureComponent } from './asset-configure/asset-configure.component';
+import { AssetRoutingModule } from './asset-routing.module';
+import { ReactiveFormsModule } from '@angular/forms';
 
-
+import { AssetConfigureOptionsComponent } from './asset-configure-options/asset-configure-options.component';
+import { ConfigureChildComponent } from './configure-child/configure-child.component';
+import { ConfigureVariablesComponent } from './configure-variables/configure-variables.component';
+import { AddChildDialogComponent } from './add-child-dialog/add-child-dialog.component';
+import { AddVariableDialogComponent } from './add-variable-dialog/add-variable-dialog.component';
+import { InputTextModule } from 'primeng/inputtext';
 
 @NgModule({
   declarations: [
     AssetRootComponent,
-    AssetHierarchyTableComponent
+    AssetHierarchyTableComponent,
+    AssetVariableDialogComponent,
+    AssetConfigureComponent,
+    AssetConfigureOptionsComponent,
+    ConfigureChildComponent,
+    ConfigureVariablesComponent,
+    AddChildDialogComponent,
+    AddVariableDialogComponent
   ],
   imports: [
     CommonModule,
     DividerModule,
     TreeTableModule,
-    ButtonModule
+    ButtonModule,
+    TableModule,
+    DialogModule,
+    PanelModule,
+    MenuModule,
+    ChipModule,
+    TagModule,
+    CardModule,
+    FieldsetModule,
+    SelectModule,
+    InputTextModule,
+    ReactiveFormsModule,
+    AssetRoutingModule,
   ]
 })
 export class AssetModule { }
