@@ -29,4 +29,27 @@ export class AssetService {
   getAssetDetails(assetId:string): Observable<any> {
     return this.http.get(`${this.baseUrl}/assets/${assetId}`)
   }
+
+  getAllAssetTypes(): Observable<any>{
+
+    return this.http.get(`${this.baseUrl}/asset-types`);
+
+  }
+
+  getAssetChildren(assetId: string): Observable<any>{
+    return this.http.get(`${this.baseUrl}/assets/${assetId}/children`)
+  }
+
+
+  removeAsset(assetId:string): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/assets/${assetId}`)
+  }
+
+  getAssetVariables(assetId: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/assests/${assetId}/variables`)
+  }
+
+  removeAssetVariables(assetId:string, variableDefinitionId: string) : Observable<any> {
+    return this.http.delete(`${this.baseUrl}/assets/${assetId}/variables/${variableDefinitionId}`)
+  }
 }

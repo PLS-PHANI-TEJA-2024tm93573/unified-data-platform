@@ -433,4 +433,28 @@ export class AssetService {
   }));
 }
 
+
+  async getChildAssets(assetId:string) {
+    const parentAsset = await this.assetRepository.findOne({
+      where: {
+        id: assetId
+      },
+    });
+
+    if (!parentAsset) {
+      throw new NotFoundException(
+        `Asset with ID ${assetId} not found`,
+      );
+    }
+
+    const children = await this.assetRepository
+      .createQueryBuilder('asset')
+      .leftJoinAndSelect('asset.assetType', 'assetType')
+      .leftJoinAndSelect('asset.parentAsset', 'parentAsset')
+      .where('parentAsset.id = :assetId', { assetId })
+      .getMany();
+
+    return children;
+
+  }
 }

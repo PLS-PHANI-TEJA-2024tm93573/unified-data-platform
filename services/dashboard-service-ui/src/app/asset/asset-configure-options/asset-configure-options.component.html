@@ -1,32 +1,41 @@
 
 <div class="configure-header">
-    <p-button  
+    <p-button
         icon="pi pi-chevron-left"
         [rounded]="true"
         [text]="true"
         severity="secondary"
         (click)="navigatePrevious()" />
     <h3 class="text-3xl font-bold text-surface-900 dark:text-surface-0 m-0">
-  Confiugre Asset 
+  Confiugre Asset
 </h3>
 
 </div>
 
 <p-fieldset [legend]="assetDetails.name">
     <div class="configure-asset-buttons">
-        <p-button 
-            label="Add Child Asset" 
-            icon="pi pi-user" 
-            severity="secondary" 
+        <p-button
+            label="Configure Child Assets"
+            icon="pi pi-user"
+            severity="secondary"
             (click) = "openChildAssetDialog(assetDetails.id)"
             />
-        <p-button label="Add Variables" icon="pi pi-gauge"  severity="secondary"/>
+        <p-button
+            label="Configure Variables"
+            icon="pi pi-gauge"
+            severity="secondary"
+            (click)="openVariablesDialog()" />
+        <p-button
+            label="Delete Asset"
+            icon="pi pi-trash"
+            severity="danger"
+            (click)="deleteAsset()" />
     </div>
     <div class="configure-asset-details">
         <div class="asset-details">
             <span>Asset ID: </span>
          <span>
-             {{assetDetails.id}} 
+             {{assetDetails.id}}
         </span>
         </div>
 
@@ -36,7 +45,7 @@
             {{assetDetails.assetType.name}}
         </span>
         </div>
-        
+
         <div class="asset-details">
             <span>Created On: </span>
             <span>
@@ -46,16 +55,22 @@
 
         <div class="asset-details">
             <span>
-                Parent Asset: 
+                Parent Asset:
             </span>
             <span>
                 {{assetDetails.parentAsset?.name}}
             </span>
         </div>
-        
+
     </div>
 </p-fieldset>
 
 <app-configure-child
     [(displayDialog)]="configureChildDialog"
+    [assetId]="assetId"
 ></app-configure-child>
+
+<app-configure-variables
+    [(displayDialog)]="configureVariablesDialog"
+    [assetId]="assetId"
+></app-configure-variables>

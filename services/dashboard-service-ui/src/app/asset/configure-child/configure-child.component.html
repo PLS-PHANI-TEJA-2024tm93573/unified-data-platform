@@ -1,33 +1,111 @@
-<p-dialog 
-  header="Asset Details" 
-  [(visible)]="displayDialog" 
-  [modal]="true" 
-  [style]="{ width: '90vw' }" 
+<p-dialog
+  header="Configure Child Assets"
+  [(visible)]="displayDialog"
+  [modal]="true"
+  [style]="{ width: '90vw' }"
   [breakpoints]="{ '960px': '85vw', '640px': '95vw' }"
-  [draggable]="false" 
+  [draggable]="false"
   [resizable]="false"
   (onHide)="onCloseDialog()">
 
   <!-- Main Body Content -->
+
+{{assetId}}
+
   <div class="py-4">
-    <p class="text-color-secondary leading-relaxed">
-      Dialog content goes here...
-    </p>
+    <div class="add-child-button">
+                <p-button
+                label="Add"
+                icon="pi pi-plus"
+                variant="outlined"
+                severity="contrast"
+                (click)="openAddChildDialog()"
+             />
+    </div>
+
+    <p-table
+    [value]="assetChildren"
+    [paginator]="true"
+    [rows]="5"
+    [tableStyle]="{ 'min-width': '50rem' }"
+    styleClass="p-datatable-striped p-datatable-bordered">
+
+    <!-- Header Template -->
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="name">
+          Name <p-sortIcon field="name"></p-sortIcon>
+        </th>
+        <th pSortableColumn="id">
+          ID <p-sortIcon field="id"></p-sortIcon>
+        </th>
+        <th pSortableColumn="createdAt">
+          Created At <p-sortIcon field="createdAt"></p-sortIcon>
+        </th>
+        <th pSortableColumn="assetType.id">
+          Asset Type  ID  <p-sortIcon field="assetType.id"></p-sortIcon>
+        </th>
+        <th pSortableColumn="assetType.name">
+          Asset Type  Name  <p-sortIcon field="assetType.id"></p-sortIcon>
+        </th>
+        <th></th>
+      </tr>
+    </ng-template>
+
+    <!-- Body Template -->
+    <ng-template pTemplate="body" let-asset>
+      <tr>
+        <td>{{ asset.name }}</td>
+        <td>{{ asset.id }}</td>
+        <td>{{ asset.createdAt | date:'medium' }}</td>
+        <td>
+          <span class="font-semibold">{{ asset.assetType?.id }}</span>
+        </td>
+        <td>
+          <span class="font-semibold">{{ asset.assetType?.name }}</span>
+        </td>
+        <td>
+            <p-button
+                label="Remove"
+                icon="pi pi-times"
+                variant="outlined"
+                severity="danger"
+                (click)="removeChildAsset(asset.id)"
+             />
+        </td>
+      </tr>
+    </ng-template>
+
+    <!-- Empty State -->
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="4" class="text-center p-4">No assets found.</td>
+      </tr>
+    </ng-template>
+
+  </p-table>
   </div>
 
   <!-- Footer Actions -->
   <ng-template pTemplate="footer">
     <div class="flex justify-end gap-2 pt-2">
-      <p-button 
-        label="Cancel" 
-        severity="secondary" 
-        [outlined]="true" 
+      <p-button
+        label="Cancel"
+        severity="secondary"
+        [outlined]="true"
         (onClick)="onCloseDialog()" />
-      <p-button 
-        label="Submit" 
-        icon="pi pi-check" 
+      <p-button
+        label="Submit"
+        icon="pi pi-check"
         (onClick)="onSubmit()" />
     </div>
   </ng-template>
 
 </p-dialog>
+
+
+<app-add-child-dialog
+  [(addChildDialogModal)]="addChildDialog"
+  [assetId]="assetId"
+>
+</app-add-child-dialog>

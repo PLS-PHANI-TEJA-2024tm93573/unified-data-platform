@@ -48,6 +48,15 @@ export class AssetController {
     return this.assetService.getAssetById(id);
   }
 
+  @Get(':assetId/children')
+  getChildAssets(
+    @Param('assetId', ParseUUIDPipe) assetId: string,
+  ){
+    console.log(assetId);
+    return this.assetService.getChildAssets(assetId)
+  }
+
+
   @Patch(':id')
   update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateAssetDto) {
     return this.assetService.update(id, dto);

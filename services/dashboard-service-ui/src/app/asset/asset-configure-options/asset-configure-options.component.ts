@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AssetService } from 'src/app/services/asset-service.service';
 import { AssetDetails } from 'src/interfaces/asset-details';
+import { AssetType } from 'src/interfaces/asset-type';
 
 @Component({
   selector: 'app-asset-configure-options',
@@ -14,6 +15,8 @@ export class AssetConfigureOptionsComponent implements OnInit {
   assetId: string ='';
   assetDetails!: AssetDetails;
   configureChildDialog: boolean = false;
+  configureVariablesDialog: boolean = false;
+  assetChildren: AssetType[] = []
 
   constructor(
       private route: ActivatedRoute,
@@ -33,7 +36,7 @@ export class AssetConfigureOptionsComponent implements OnInit {
       })
     });
 
-    
+
   }
 
   navigatePrevious() {
@@ -43,6 +46,19 @@ export class AssetConfigureOptionsComponent implements OnInit {
   openChildAssetDialog(assetId: string) {
     console.log(this.configureChildDialog)
     this.configureChildDialog = true;
+
+
+
+  }
+
+  openVariablesDialog() {
+    this.configureVariablesDialog = true;
+  }
+
+  deleteAsset() {
+    this.assetService.removeAsset(this.assetId).subscribe(() => {
+      this.navigatePrevious();
+    });
   }
 
 
