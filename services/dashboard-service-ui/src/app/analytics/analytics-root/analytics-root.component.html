@@ -1,0 +1,20 @@
+<h1 class="text-3xl font-bold text-surface-900 dark:text-surface-0 m-0">
+    Analytics
+</h1>
+
+<p-divider />
+
+<!-- <router-outlet></router-outlet> -->
+
+<p-tabs [value]="activeTabValue">
+    <p-tablist>
+        <p-tab value="oee" [routerLink]="['oee']">OEE Analysis</p-tab>
+        <p-tab value="telemetry" [routerLink]="['telemetry']">Telemetry</p-tab>
+    </p-tablist>
+    
+
+    <p-tabpanels>
+    <router-outlet></router-outlet>
+  </p-tabpanels>
+
+</p-tabs>

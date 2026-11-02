@@ -17,6 +17,7 @@ import { SidebarModule } from 'primeng/sidebar';
 import { PanelMenuModule } from 'primeng/panelmenu';
 import { ButtonModule } from 'primeng/button';
 import { DividerModule } from 'primeng/divider';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 @NgModule({
   declarations: [AppComponent, SideNavigationComponent, TopNavBarComponent],
@@ -26,6 +27,7 @@ import { DividerModule } from 'primeng/divider';
     HttpClientModule,
     AppRoutingModule,
     AssetModule,
+    AnalyticsModule,
     SidebarModule,
     MenubarModule,
     PanelMenuModule,
