@@ -1,0 +1,370 @@
+PRODUCTIONLINE01 - ASSET HIERARCHY AND VARIABLE DEFINITIONS
+============================================================
+
+Purpose
+-------
+Demo hierarchy for a beverage manufacturing process and OEE-oriented
+telemetry. The hierarchy retains the supplied assets and adds the variable
+definitions needed to demonstrate equipment and line monitoring.
+
+IMPORTANT API NOTES
+------------------
+1. Variable definitions are reusable metadata. The API's CreateVariableDefinition
+   accepts: name, dataType, unit, description.
+2. createdAt and updatedAt are generated and returned by the service. They are
+   NOT accepted in the create request. The API does not allow clients to set
+   these timestamps.
+3. A variable definition must first be associated with an asset type, and then
+   assigned to an asset of that type.
+4. The script creates the type-variable associations and assigns the variables
+   to each asset.
+5. Values such as RUNNING, STOPPED, IDLE and FAULT are represented as STRING
+   because the supplied API schema does not define an ENUM data type.
+6. Counters should be cumulative within the counter's defined reset scope.
+   Rates are not counts. OEE calculations should use deltas from counters over
+   the reporting window and handle resets/restarts.
+7. OEE configuration (shift schedules, planned breaks, ideal rates/cycle times,
+   product-specific rates) is not represented as telemetry variable definitions
+   here. Store that as production/configuration data in the relevant service.
+
+HIERARCHY
+---------
+
+ProductionLine01 [Asset Type: PRODUCTION_LINE]
+|
++-- Station01 [Asset Type: PRODUCTION_STATION]
+    |
+    +-- Mixer_01 [Asset Type: MIXER]
+    |
+    +-- Boiler_Hub [Asset Type: BOILER_HUB]
+    |   |
+    |   +-- Boiler_01 [Asset Type: BOILER]
+    |   |
+    |   +-- Boiler_02 [Asset Type: BOILER]
+    |
+    +-- Pump_0 [Asset Type: PUMP]
+    |
+    +-- Packager [Asset Type: PACKAGER]
+
+
+VARIABLE DEFINITIONS
+====================
+
+Conventions:
+- dataType is the API's string field. Suggested values below are FLOAT,
+  INTEGER, BOOLEAN and STRING.
+- "-" means dimensionless / not applicable.
+- Timestamp fields below are variable-definition audit fields returned by the
+  API, not telemetry variables.
+- Every variable definition is created once and reused through type
+  associations where appropriate.
+
+A. PRODUCTION_LINE01
+--------------------
+Asset type: PRODUCTION_LINE
+
+Variables:
+1. line_status
+   Unit: -
+   Data type: STRING
+   Definition: Current production-line state (RUNNING, STOPPED, IDLE, FAULT).
+
+2. total_good_bottles
+   Unit: bottles
+   Data type: INTEGER
+   Definition: Good finished bottles produced by the line; cumulative counter.
+
+3. total_rejected_bottles
+   Unit: bottles
+   Data type: INTEGER
+   Definition: Rejected finished bottles attributed to the line; cumulative counter.
+
+4. total_bottles
+   Unit: bottles
+   Data type: INTEGER
+   Definition: Total finished bottles produced by the line; cumulative counter.
+
+B. STATION01
+------------
+Asset type: PRODUCTION_STATION
+
+Variables:
+1. station_status
+   Unit: -
+   Data type: STRING
+   Definition: Current station state (RUNNING, STOPPED, IDLE, FAULT).
+
+2. active_equipment_count
+   Unit: equipment
+   Data type: INTEGER
+   Definition: Number of equipment assets currently active in this station.
+
+C. MIXER_01
+----------
+Asset type: MIXER
+
+Variables:
+1. machine_status
+   Unit: -
+   Data type: STRING
+   Definition: Current mixer state (RUNNING, STOPPED, IDLE, FAULT, SETUP).
+
+2. time_running
+   Unit: s
+   Data type: FLOAT
+   Definition: Cumulative mixer running time within the counter reset scope.
+
+3. ingredient_weight
+   Unit: g
+   Data type: FLOAT
+   Definition: Measured ingredient weight for the current batch or weighing event.
+
+4. mixing_speed
+   Unit: rpm
+   Data type: FLOAT
+   Definition: Actual agitator rotational speed.
+
+5. batch_count
+   Unit: batches
+   Data type: INTEGER
+   Definition: Cumulative number of completed mixing batches.
+
+6. batch_rejected_count
+   Unit: batches
+   Data type: INTEGER
+   Definition: Cumulative number of batches rejected by quality inspection.
+
+7. actual_cycle_time
+   Unit: s/batch
+   Data type: FLOAT
+   Definition: Actual elapsed processing time for a completed mixing batch.
+
+8. batch_id
+   Unit: -
+   Data type: STRING
+   Definition: Identifier of the batch currently being processed.
+
+D. BOILER_HUB
+-------------
+Asset type: BOILER_HUB
+
+Variables:
+1. hub_status
+   Unit: -
+   Data type: STRING
+   Definition: Boiler subsystem state (RUNNING, STOPPED, IDLE, FAULT).
+
+2. active_boiler_count
+   Unit: boilers
+   Data type: INTEGER
+   Definition: Number of boilers currently active under this hub.
+
+3. available_boiler_count
+   Unit: boilers
+   Data type: INTEGER
+   Definition: Number of boilers available for operation under this hub.
+
+Note: Boiler_Hub is a logical grouping/coordination asset in this demo. Do not
+calculate an independent OEE for it unless it is defined as a production unit
+with its own production boundary and output.
+
+E. BOILER_01 AND BOILER_02
+--------------------------
+Asset type: BOILER
+Both boiler assets share the following variable definitions:
+
+1. machine_status
+   Unit: -
+   Data type: STRING
+   Definition: Current boiler state (RUNNING, STOPPED, IDLE, FAULT, SETUP).
+
+2. time_running
+   Unit: s
+   Data type: FLOAT
+   Definition: Cumulative boiler running time within the counter reset scope.
+
+3. temperature
+   Unit: °C
+   Data type: FLOAT
+   Definition: Measured process temperature.
+
+4. target_temperature
+   Unit: °C
+   Data type: FLOAT
+   Definition: Configured temperature setpoint for the current process recipe.
+
+5. pressure
+   Unit: psi
+   Data type: FLOAT
+   Definition: Measured boiler/process pressure.
+
+6. target_pressure
+   Unit: psi
+   Data type: FLOAT
+   Definition: Configured pressure setpoint for the current process recipe.
+
+7. heating_cycle_count
+   Unit: cycles
+   Data type: INTEGER
+   Definition: Cumulative number of completed heating cycles.
+
+8. rejected_batch_count
+   Unit: batches
+   Data type: INTEGER
+   Definition: Cumulative number of batches rejected after boiler processing.
+
+9. actual_heating_cycle_time
+   Unit: s/cycle
+   Data type: FLOAT
+   Definition: Actual elapsed time for a completed heating cycle.
+
+10. batch_id
+    Unit: -
+    Data type: STRING
+    Definition: Identifier of the batch currently being heated.
+
+11. heating_cycle_active
+    Unit: -
+    Data type: BOOLEAN
+    Definition: True while a heating cycle is in progress.
+
+F. PUMP_0
+--------
+Asset type: PUMP
+
+Variables:
+1. machine_status
+   Unit: -
+   Data type: STRING
+   Definition: Current pump state (RUNNING, STOPPED, IDLE, FAULT).
+
+2. time_running
+   Unit: s
+   Data type: FLOAT
+   Definition: Cumulative pump running time within the counter reset scope.
+
+3. volume_pumped
+   Unit: L
+   Data type: FLOAT
+   Definition: Cumulative volume transferred by the pump.
+
+4. flow_rate
+   Unit: L/min
+   Data type: FLOAT
+   Definition: Actual instantaneous or averaged liquid flow rate.
+
+5. target_flow_rate
+   Unit: L/min
+   Data type: FLOAT
+   Definition: Configured target flow rate for the current transfer operation.
+
+6. transfer_cycle_count
+   Unit: transfers
+   Data type: INTEGER
+   Definition: Cumulative number of completed transfer operations.
+
+7. rejected_transfer_count
+   Unit: transfers
+   Data type: INTEGER
+   Definition: Cumulative number of transfers rejected by process/quality checks.
+
+8. actual_transfer_cycle_time
+   Unit: s/transfer
+   Data type: FLOAT
+   Definition: Actual elapsed duration of a completed transfer operation.
+
+9. batch_id
+   Unit: -
+   Data type: STRING
+   Definition: Identifier of the batch currently being transferred.
+
+G. PACKAGER
+-----------
+Asset type: PACKAGER
+
+Variables:
+1. machine_status
+   Unit: -
+   Data type: STRING
+   Definition: Current packager state (RUNNING, STOPPED, IDLE, FAULT, SETUP).
+
+2. time_running
+   Unit: s
+   Data type: FLOAT
+   Definition: Cumulative packager running time within the counter reset scope.
+
+3. total_bottles
+   Unit: bottles
+   Data type: INTEGER
+   Definition: Cumulative number of bottles processed/produced by the packager.
+
+4. good_bottles
+   Unit: bottles
+   Data type: INTEGER
+   Definition: Cumulative number of bottles accepted by quality inspection.
+
+5. rejected_bottles
+   Unit: bottles
+   Data type: INTEGER
+   Definition: Cumulative number of bottles rejected by quality inspection.
+
+6. production_speed
+   Unit: bottles/min
+   Data type: FLOAT
+   Definition: Actual packaging production rate.
+
+7. bottle_fill_level
+   Unit: mL
+   Data type: FLOAT
+   Definition: Measured fill quantity for a bottle or sampled bottle.
+
+8. target_fill_level
+   Unit: mL
+   Data type: FLOAT
+   Definition: Required fill quantity for the active product.
+
+9. jam_count
+   Unit: events
+   Data type: INTEGER
+   Definition: Cumulative number of packaging jam events.
+
+10. batch_id
+    Unit: -
+    Data type: STRING
+    Definition: Identifier of the batch/product currently being packaged.
+
+
+VARIABLE DEFINITION AUDIT FIELDS
+================================
+For every variable definition created by the script, the service response
+contains:
+- id: UUID generated by the service
+- name: variable name
+- dataType: data type
+- unit: engineering unit
+- description: variable description
+- createdAt: creation timestamp generated by the service
+- updatedAt: last-update timestamp generated by the service
+
+The create API request does not accept createdAt or updatedAt. They cannot be
+pre-populated by this script. They can be inspected using GET /variables or
+GET /variables/{id} after creation.
+
+OEE IMPLEMENTATION NOTES
+========================
+- Availability = Operating Time / Planned Production Time.
+- Performance = Ideal Cycle Time * Total Count / Operating Time.
+- Quality = Good Count / Total Count.
+- OEE = Availability * Performance * Quality.
+- Planned production time and planned breaks come from schedules, not machine
+  telemetry.
+- Ideal cycle time / ideal rate is product- and equipment-specific configuration,
+  not a measured process value.
+- For batch equipment, define a batch as the production unit and use ideal
+  seconds per batch or batches per hour.
+- For Pump_0, define whether the OEE production unit is litres or completed
+  transfer cycles. Do not mix units in one calculation.
+- For line OEE, use the line's own planned time, final output, good output and
+  ideal line rate. Do not take a simple average of child-machine OEE values.
+- A process parameter outside its setpoint is not automatically a rejected
+  product. Apply explicit quality acceptance rules.
