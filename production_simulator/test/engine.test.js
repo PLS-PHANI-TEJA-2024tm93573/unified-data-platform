@@ -1,0 +1,12 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const { Simulation } = require('../src/engine');
+
+function setup() { const messages = []; const assets = {}; for (const [i, name] of ['ProductionLine01', 'Station01', 'Mixer_01', 'Boiler_Hub', 'Boiler_01', 'Boiler_02', 'Pump_0', 'Packager'].entries()) assets[name] = { id: `id-${i}`, name, assetType: { name: name.toUpperCase() }, variables: [] }; const sim = new Simulation(assets, (subject, payload) => messages.push({ subject, payload }), { faultProbabilityPerTick: 0, jamProbabilityPerTick: 0, rejectProbability: 0, plannedBreakMinutes: 0 }); return { sim, messages }; }
+
+test('run lifecycle pauses virtual time and resets only in-memory counters', () => { const { sim } = setup(); sim.start(); const before = sim.now.getTime(); sim.tick(); const after = sim.now.getTime(); assert.ok(after > before); sim.pause(); sim.tick(); assert.equal(sim.now.getTime(), after); sim.stop(); sim.reset(); assert.equal(sim.counters.total, 0); });
+test('seeded output is reproducible and counts reconcile', () => { const run = () => { const { sim } = setup(); sim.start(); for (let i = 0; i < 20; i++) sim.tick(); return sim.counters; }; const a = run(), b = run(); assert.deepEqual(a, b); assert.equal(a.total, a.good + a.rejected); });
+test('does not create bottles when the packager is idle', () => { const { sim } = setup(); sim.start(); sim.transition('Packager', 'IDLE'); sim.tick(); assert.equal(sim.counters.total, 0); });
+test('clamps and validates runtime configuration', () => { const { sim } = setup(); assert.throws(() => sim.setConfig({ speedMultiplier: 0 }), /Invalid/); });
+test('fractional production accumulator conserves units at 45 bottles per minute', () => { const { sim } = setup(); sim.config.idealRatePerMinute = 45; sim.config.speedMinFactor = 1; sim.config.speedMaxFactor = 1; sim.start(); for (let i = 0; i < 60; i++) sim.tick(); assert.equal(sim.counters.total, 45); assert.equal(sim.counters.total, sim.counters.good + sim.counters.rejected); });
+test('faulted equipment does not produce and stop closes its interval', () => { const { sim } = setup(); sim.config.faultProbabilityPerTick = 1; sim.start(); sim.tick(); assert.equal(sim.machine.Packager, 'FAULTED'); assert.equal(sim.counters.total, 0); sim.stop(); assert.equal(sim.downtime.length, 1); assert.ok(new Date(sim.downtime[0].end) >= new Date(sim.downtime[0].start)); });
