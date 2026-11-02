@@ -36,6 +36,16 @@ export class AssetService {
 
   }
 
+  createAsset(asset: {
+    name: string;
+    assetTypeId: string;
+    description?: string;
+    location?: string;
+    parentAssetId?: string;
+  }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/assets`, asset);
+  }
+
   getAssetChildren(assetId: string): Observable<any>{
     return this.http.get(`${this.baseUrl}/assets/${assetId}/children`)
   }

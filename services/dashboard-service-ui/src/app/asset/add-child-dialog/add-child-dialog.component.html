@@ -40,20 +40,31 @@
       </small>
     </div>
 
-    <!-- Asset Name Text Input -->
+    <!-- Selected Asset Type ID -->
     <div class="flex flex-col gap-1">
-      <label for="assetTypeId" class="font-medium text-sm">Asset Id *</label>
+      <label for="assetTypeId" class="font-medium text-sm">Asset Type ID</label>
       <input
         id="assetTypeId"
         type="text"
         pInputText
         formControlName="assetTypeId"
+        />
+    </div>
+
+    <!-- Asset Name Text Input -->
+    <div class="flex flex-col gap-1">
+      <label for="name" class="font-medium text-sm">Asset Name *</label>
+      <input
+        id="name"
+        type="text"
+        pInputText
+        formControlName="name"
         placeholder="Enter asset name"
-        [ngClass]="{ 'ng-invalid ng-dirty': assetForm.get('assetTypeId')?.invalid && assetForm.get('assetTypeId')?.touched }" />
+        [ngClass]="{ 'ng-invalid ng-dirty': assetForm.get('name')?.invalid && assetForm.get('name')?.touched }" />
       <small
-        *ngIf="assetForm.get('assetTypeId')?.invalid && assetForm.get('assetTypeId')?.touched"
+        *ngIf="assetForm.get('name')?.invalid && assetForm.get('name')?.touched"
         class="text-red-500">
-        Asset Type Id is required.
+        Asset name is required.
       </small>
     </div>
 

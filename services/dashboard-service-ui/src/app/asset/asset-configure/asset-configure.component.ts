@@ -13,6 +13,8 @@ export class AssetConfigureComponent implements OnInit {
 
   assetTreeHierarchy: TreeNode[] = []
   isVariableDialogVisible: boolean = false;
+  addChildDialog: boolean = false;
+  rootAssetParentId = '';
   selectedAssetName = ''
   selectedAssetVariables: any[] = [];
 
@@ -22,9 +24,18 @@ export class AssetConfigureComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
+    this.loadAssetHierarchy();
+  }
+
+  loadAssetHierarchy(): void {
     this.assetService.getAssetHierarchy().subscribe((response)=>{
       this.assetTreeHierarchy = [...response]
     })
+  }
+
+  openAddRootAssetDialog(): void {
+    this.rootAssetParentId = '';
+    this.addChildDialog = true;
   }
 
 

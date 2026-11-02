@@ -107,5 +107,6 @@
 <app-add-child-dialog
   [(addChildDialogModal)]="addChildDialog"
   [assetId]="assetId"
+  (assetCreated)="loadAssetChildren()"
 >
 </app-add-child-dialog>

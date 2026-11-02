@@ -1,22 +1,29 @@
 <p-treeTable [value]="assetTreeHierarchy">
-  <ng-template pTemplate="header">
-    <tr>
-      <th>Asset Name</th>
-      <th>Variables</th>
-      <th></th>
-      <th></th>
-      <th>
-        <!-- <p-button  icon="pi pi-cog" severity="secondary" /> -->
-        <!-- <p-button label="Add Child" icon="pi pi-plus" severity="secondary" />
+  @if (assetTreeHierarchy.length > 0) {
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Asset Name</th>
+        <th></th>
+        <th>Configuration</th>
+        <th></th>
+        <th>
+          <!-- <p-button label="Add Child" icon="pi pi-plus" severity="secondary" />
+        </th>
         <p-button label="Add Child" icon="pi pi-plus" severity="secondary" /> -->
-      </th>
-      <th>
-        <!-- <p-button label="Add Child" icon="pi pi-plus" severity="secondary" /> -->
-      </th>
+        <th>
+          <p-button
+                label="Add Root Asset"
+                icon="pi pi-plus"
+                variant="outlined"
+                severity="contrast"
+                (onClick)="openAddRootAssetDialog()"/>
 
-      <!-- <th>Location</th> -->
-    </tr>
-  </ng-template>
+        </th>
+
+        <!-- <th>Location</th> -->
+      </tr>
+    </ng-template>
+  }
   <ng-template pTemplate="body" let-rowNode let-rowData="rowData">
     <tr [ttRow]="rowNode">
       <td>
@@ -49,9 +56,29 @@
         <!-- <p-button label="Configure Variables" icon="pi pi-gauge" severity="secondary" /> -->
        </td>
        <td></td>
+       <td></td>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="emptymessage">
+    <tr class="border-none">
+      <td colspan="5" class="border-none">
+        <div class="flex flex-column align-items-center justify-content-center gap-4 p-6 text-center">
+          <div class="flex align-items-center gap-2 text-color-secondary">
+            <i class="pi pi-inbox text-2xl"></i>
+            <span>No assets found.</span>
+          </div>
+          <p-button label="Add asset" icon="pi pi-plus" iconPos="top" (onClick)="openAddRootAssetDialog()" />
+        </div>
+      </td>
     </tr>
   </ng-template>
 </p-treeTable>
+
+<app-add-child-dialog
+  [(addChildDialogModal)]="addChildDialog"
+  [assetId]="rootAssetParentId"
+  (assetCreated)="loadAssetHierarchy()">
+</app-add-child-dialog>
 
 <app-asset-variable-dialog
   [(display)]="isVariableDialogVisible"

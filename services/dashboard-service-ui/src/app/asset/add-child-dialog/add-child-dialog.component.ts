@@ -20,6 +20,7 @@ export class AddChildDialogComponent implements OnInit {
 
   @Input() addChildDialogModal: boolean = false;
   @Output() addChildDialogModalChange = new EventEmitter<boolean>();
+  @Output() assetCreated = new EventEmitter<any>();
   @Input() assetId: string = '';
 
   availableAssetTypes: any[] = []
@@ -40,27 +41,40 @@ export class AddChildDialogComponent implements OnInit {
 
     this.assetForm = this.fb.group({
       assetType: ['', Validators.required],
-      assetTypeId: [{ value: '', disabled: true }, Validators.required],
+      assetTypeId: [{ value: '', disabled: true }],
+      name: ['', Validators.required],
       description: [''],
       location: [''],
-      parentAsset: [{ value: this.assetId, disabled: true }, Validators.required]
+      parentAsset: [{ value: this.assetId, disabled: true }]
     })
 
     this.assetForm.get('assetType')?.valueChanges.subscribe((selectedId: string) => {
-      if (selectedId) {
-        console.log(selectedId)
-        // Patch assetTypeId control with the selected ID value
-        this.assetForm.patchValue({
-          assetTypeId: selectedId
-        });
-      }
+      this.assetForm.get('assetTypeId')?.setValue(selectedId || '');
     });
-
 
   }
 
   onSubmit() {
-    this.hideDialog()
+    if (this.assetForm.invalid) {
+      this.assetForm.markAllAsTouched();
+      return;
+    }
+
+    const formValue = this.assetForm.getRawValue();
+    const asset = {
+      name: formValue.name,
+      assetTypeId: formValue.assetType,
+      description: formValue.description || undefined,
+      location: formValue.location || undefined,
+      ...(formValue.parentAsset ? { parentAssetId: formValue.parentAsset } : {})
+    };
+
+    this.assetService.createAsset(asset).subscribe({
+      next: (createdAsset) => {
+        this.assetCreated.emit(createdAsset);
+        this.hideDialog();
+      }
+    });
   }
 
   hideDialog() {

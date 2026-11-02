@@ -23,14 +23,14 @@ export class ConfigureChildComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loadAssetChildren();
+  }
 
-      this.assetService.getAssetChildren(this.assetId).subscribe((childrenResponse)=>{
-        this.assetChildren = [...childrenResponse]
-        console.log(this.assetChildren)
-      })
-
-
-
+  loadAssetChildren(): void {
+    this.assetService.getAssetChildren(this.assetId).subscribe((childrenResponse)=>{
+      this.assetChildren = [...childrenResponse]
+      console.log(this.assetChildren)
+    })
   }
 
   onSubmit(){

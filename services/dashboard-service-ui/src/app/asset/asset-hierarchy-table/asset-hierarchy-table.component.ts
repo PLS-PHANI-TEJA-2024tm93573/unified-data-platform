@@ -12,6 +12,7 @@ export class AssetHierarchyTableComponent implements OnInit {
 
   assetHierarchy: TreeNode[] = []
   isVariableDialogVisible: boolean = false;
+  addChildDialog: boolean = false;
   selectedAssetName = ''
   selectedAssetVariables: any[] = [];
 
@@ -21,6 +22,10 @@ export class AssetHierarchyTableComponent implements OnInit {
 
 
   ngOnInit(): void {
+    this.loadAssetHierarchy();
+  }
+
+  loadAssetHierarchy(): void {
     this.assetService.getAssetHierarchy().subscribe((response)=>{
       this.assetHierarchy = [...response]
     })
