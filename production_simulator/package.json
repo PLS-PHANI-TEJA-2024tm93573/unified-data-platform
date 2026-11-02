@@ -1,0 +1,14 @@
+{
+  "name": "production-simulator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Deterministic beverage production line simulator and OEE calculator",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "nats": "^2.29.3"
+  }
+}
