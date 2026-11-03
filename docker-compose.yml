@@ -3,16 +3,21 @@ services:
     image: timescale/timescaledb:latest-pg17
     container_name: unified-data-platform-postgres
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-unified_data_platform}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
-      - "${POSTGRES_PORT}:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     networks:
       - data-platform-net
-    
+
   nats:
     image: nats:latest
     container_name: unified-data-platform-nats
@@ -21,24 +26,102 @@ services:
     networks:
       - data-platform-net
 
-  # production-simulator:
-  #   build:
-  #     context: ./production_simulator
-  #   container_name: unified-data-platform-production-simulator
-  #   depends_on:
-  #     - nats
-  #   environment:
-  #     PORT: 8090
-  #     NATS_URL: nats://nats:4222
-  #     METADATA_MODE: fixture
-  #   ports:
-  #     - "8090:8090"
-  #   restart: unless-stopped
-  #   networks:
-  #     - data-platform-net
-    
+  asset-model-service:
+    build:
+      context: ./services/asset-model-service
+    container_name: unified-data-platform-asset-model-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_started
+    environment:
+      PORT: 3000
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${POSTGRES_DB:-unified_data_platform}
+      DATABASE_USER: ${POSTGRES_USER:-postgres}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "3000:3000"
+      - "50051:50051"
+    restart: unless-stopped
+    networks:
+      - data-platform-net
 
-  # Debug-only service for local message flow testing; not part of the production platform.
+  data-service:
+    build:
+      context: ./services/data-service
+    container_name: unified-data-platform-data-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_started
+      asset-model-service:
+        condition: service_started
+    environment:
+      PORT: 3001
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${POSTGRES_DB:-unified_data_platform}
+      DATABASE_USER: ${POSTGRES_USER:-postgres}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      ASSET_MODEL_GRPC_URL: asset-model-service:50051
+      NATS_URL: nats://nats:4222
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
+    networks:
+      - data-platform-net
+
+  kpi-service:
+    build:
+      context: ./services/kpi-service
+    container_name: unified-data-platform-kpi-service
+    depends_on:
+      asset-model-service:
+        condition: service_started
+      data-service:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    environment:
+      ASSET_MODEL_URL: http://asset-model-service:3000
+      DATA_SERVICE_URL: http://data-service:3001
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-unified_data_platform}
+      ASSET_CONFIG_JSON: ${ASSET_CONFIG_JSON:-}
+      COUNTER_BASELINE_DAYS: ${COUNTER_BASELINE_DAYS:-1}
+      POLL_INTERVAL_SECONDS: ${POLL_INTERVAL_SECONDS:-5}
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    networks:
+      - data-platform-net
+
+  production-simulator:
+    build:
+      context: ./production_simulator
+    container_name: unified-data-platform-production-simulator
+    depends_on:
+      nats:
+        condition: service_started
+      asset-model-service:
+        condition: service_started
+      kpi-service:
+        condition: service_started
+    environment:
+      PORT: 8090
+      NATS_URL: nats://nats:4222
+      METADATA_MODE: asset-model
+      ASSET_MODEL_URL: http://asset-model-service:3000
+    ports:
+      - "8090:8090"
+    restart: unless-stopped
+    networks:
+      - data-platform-net
+
+  # Independent local tool for message-flow testing.
   nodered:
     image: nodered/node-red:latest
     container_name: unified-data-platform-nodered
@@ -55,4 +138,4 @@ volumes:
 
 networks:
   data-platform-net:
-    external: true
+    driver: bridge

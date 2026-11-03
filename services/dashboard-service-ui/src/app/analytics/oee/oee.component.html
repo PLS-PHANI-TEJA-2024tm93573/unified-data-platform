@@ -1,1 +1,44 @@
-<p>oee works!</p>
+<div class="oee-options">
+    <p-selectbutton
+        [options]="stateOptions"
+        [(ngModel)]="value"
+        (ngModelChange)="onModeChange($event)"
+        optionLabel="label"
+        optionValue="value"
+        aria-labelledby="basic"
+    />
+
+    <p-select
+        [options]="availableAssets"
+        [(ngModel)]="selectedAssetId"
+        (ngModelChange)="onAssetChange($event)"
+        [checkmark]="true"
+        [showClear]="true"
+        optionLabel="name"
+        optionValue="id"
+        placeholder="Select an Asset"
+        class="w-full md:w-75"
+    />
+
+    <p-select
+        *ngIf="value === 'history' && selectedAssetId"
+        [options]="availableVariables"
+        [(ngModel)]="selectedVariableId"
+        [checkmark]="true"
+        [showClear]="true"
+        optionLabel="name"
+        optionValue="id"
+        placeholder="Select a Variable"
+        class="w-full md:w-75"
+    />
+
+    <p-button
+        [label]="connectionLabel"
+        icon="pi pi-play"
+        [loading]="isConnectionEstablished"
+        [disabled]="isLoadDataDisabled"
+        (onClick)="connect()"
+        severity="contrast"
+    />
+
+</div>

@@ -1,0 +1,56 @@
+{
+  "info": {
+    "_postman_id": "b7630db8-3492-4a3c-8327-46f3c68b2f36",
+    "name": "Data Service API",
+    "description": "Requests for the Data Service root, health, and measurement query endpoints. Measurement requests require an asset variable UUID present in the service metadata cache; update the collection environment before use.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Service",
+      "item": [
+        {
+          "name": "Root message",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/"
+          },
+          "response": []
+        },
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/health"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Measurements",
+      "item": [
+        {
+          "name": "Get measurements in range",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/measurements?asset_variable_id={{assetVariableId}}&from={{from}}&to={{to}}&limit={{limit}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Get latest measurement",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/measurements/{{assetVariableId}}/latest"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

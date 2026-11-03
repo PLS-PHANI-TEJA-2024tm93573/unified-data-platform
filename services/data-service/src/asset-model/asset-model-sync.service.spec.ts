@@ -43,6 +43,7 @@ describe('AssetModelSyncService', () => {
             variables: [
               {
                 id: 'variable-1',
+                assetVariableId: 'asset-variable-1',
                 name: 'Temperature',
                 dataType: 'FLOAT',
                 unit: 'C',
@@ -60,7 +61,7 @@ describe('AssetModelSyncService', () => {
     expect(upsert).toHaveBeenCalledWith(
       [
         expect.objectContaining({
-          assetVariableId: 'variable-1',
+          assetVariableId: 'asset-variable-1',
           assetId: 'asset-child',
           name: 'Temperature',
           dataType: 'FLOAT',
@@ -71,7 +72,7 @@ describe('AssetModelSyncService', () => {
     );
     expect(where).toHaveBeenCalledWith(
       expect.stringContaining('asset_variable_id'),
-      expect.objectContaining({ assetVariableId0: 'variable-1' }),
+      expect.objectContaining({ assetVariableId0: 'asset-variable-1' }),
     );
     expect(execute).toHaveBeenCalled();
   });
@@ -92,14 +93,14 @@ describe('AssetModelSyncService', () => {
         id: 'asset-root',
         name: 'Root',
         variables: [
-          { id: 'variable-1', name: 'Temperature', dataType: 'FLOAT', unit: 'C' },
+          { id: 'variable-1', assetVariableId: 'asset-variable-1', name: 'Temperature', dataType: 'FLOAT', unit: 'C' },
         ],
         children: [
           {
             id: 'asset-child',
             name: 'Child',
             variables: [
-              { id: 'variable-1', name: 'Temperature', dataType: 'FLOAT', unit: 'C' },
+              { id: 'variable-1', assetVariableId: 'asset-variable-2', name: 'Temperature', dataType: 'FLOAT', unit: 'C' },
             ],
             children: [],
           },
@@ -110,7 +111,10 @@ describe('AssetModelSyncService', () => {
     await service.synchronize();
 
     expect(upsert).toHaveBeenCalledWith(
-      [expect.objectContaining({ assetVariableId: 'variable-1' })],
+      [
+        expect.objectContaining({ assetVariableId: 'asset-variable-1' }),
+        expect.objectContaining({ assetVariableId: 'asset-variable-2' }),
+      ],
       ['assetVariableId'],
     );
   });

@@ -22,6 +22,7 @@ export interface AssetNode {
 
 export interface AssetVariable {
   id: string;
+  assetVariableId: string;
   name: string;
   dataType: string;
   unit: string;

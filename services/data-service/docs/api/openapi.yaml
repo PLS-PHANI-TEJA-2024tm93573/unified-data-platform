@@ -1,0 +1,206 @@
+openapi: 3.0.3
+info:
+  title: Data Service API
+  description: REST API for health checks and querying stored asset-variable measurements.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3001
+    description: Local development
+tags:
+  - name: Health
+  - name: Measurements
+  - name: Service
+paths:
+  /:
+    get:
+      tags: [Service]
+      summary: Get the starter service message
+      operationId: getRootMessage
+      responses:
+        '200':
+          description: Service greeting.
+          content:
+            text/html:
+              schema:
+                type: string
+                example: Hello World!
+  /health:
+    get:
+      tags: [Health]
+      summary: Check service health
+      operationId: getHealth
+      responses:
+        '200':
+          description: The service is responding.
+          content:
+            application/json:
+              schema:
+                type: boolean
+                example: true
+  /measurements:
+    get:
+      tags: [Measurements]
+      summary: Get measurements in a time range
+      description: Returns measurements for an inclusive timestamp range, ordered from oldest to newest. The asset variable must exist in the Data Service metadata cache.
+      operationId: getMeasurementsInRange
+      parameters:
+        - name: asset_variable_id
+          in: query
+          required: true
+          description: Asset variable UUID.
+          schema:
+            type: string
+            format: uuid
+          example: 11111111-1111-4111-8111-111111111111
+        - name: from
+          in: query
+          required: true
+          description: Inclusive start timestamp (ISO 8601).
+          schema:
+            type: string
+            format: date-time
+          example: '2026-09-06T14:00:00Z'
+        - name: to
+          in: query
+          required: true
+          description: Inclusive end timestamp (ISO 8601); must be equal to or later than `from`.
+          schema:
+            type: string
+            format: date-time
+          example: '2026-09-06T15:00:00Z'
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of rows to return.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10000
+          example: 100
+      responses:
+        '200':
+          description: Measurements returned successfully. An empty range returns an empty `data` array.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeasurementRangeResponse'
+              example:
+                asset_variable_id: 11111111-1111-4111-8111-111111111111
+                data_type: FLOAT
+                unit: rpm
+                data:
+                  - timestamp: '2026-09-06T14:30:00.000Z'
+                    value: 1250.5
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /measurements/{assetVariableId}/latest:
+    get:
+      tags: [Measurements]
+      summary: Get the latest measurement for an asset variable
+      operationId: getLatestMeasurement
+      parameters:
+        - name: assetVariableId
+          in: path
+          required: true
+          description: Asset variable UUID.
+          schema:
+            type: string
+            format: uuid
+          example: 11111111-1111-4111-8111-111111111111
+      responses:
+        '200':
+          description: Latest measurement returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LatestMeasurementResponse'
+              example:
+                asset_variable_id: 11111111-1111-4111-8111-111111111111
+                data_type: FLOAT
+                unit: rpm
+                timestamp: '2026-09-06T14:30:00.000Z'
+                value: 1250.5
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  schemas:
+    MeasurementValue:
+      description: Measurement value, normalized from its numeric, boolean, or text storage column.
+      nullable: true
+      oneOf:
+        - type: number
+        - type: boolean
+        - type: string
+    MeasurementPoint:
+      type: object
+      required: [timestamp, value]
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        value:
+          $ref: '#/components/schemas/MeasurementValue'
+    MeasurementRangeResponse:
+      type: object
+      required: [asset_variable_id, data_type, unit, data]
+      properties:
+        asset_variable_id:
+          type: string
+          format: uuid
+        data_type:
+          type: string
+          description: Data type from the synchronized asset-variable metadata.
+        unit:
+          type: string
+          nullable: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/MeasurementPoint'
+    LatestMeasurementResponse:
+      type: object
+      required: [asset_variable_id, data_type, unit, timestamp, value]
+      properties:
+        asset_variable_id:
+          type: string
+          format: uuid
+        data_type:
+          type: string
+        unit:
+          type: string
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+        value:
+          $ref: '#/components/schemas/MeasurementValue'
+    ErrorResponse:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+        message:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+        error:
+          type: string
+  responses:
+    BadRequest:
+      description: Invalid UUID, timestamp, limit, or timestamp range.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Asset variable is unknown, or no latest measurement exists.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

@@ -1,12 +1,19 @@
 """Read measurement histories through the Data Service's existing API."""
 
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import httpx
 
 from .config import settings
 from .oee import ASSET_VARIABLES, ENABLED_ASSETS
+
+
+def _data_service_timestamp(value: datetime) -> str:
+    """Format an aware datetime as an ISO 8601 UTC timestamp accepted by Data Service."""
+    if value.tzinfo is None:
+        raise ValueError("Data Service timestamps must include a timezone")
+    return value.astimezone(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
 def asset_config(asset_name_or_id: str) -> tuple[str, dict] | None:
@@ -30,8 +37,8 @@ async def read_history(client: httpx.AsyncClient, asset_name: str, config: dict,
     async def query(variable_id: str, from_time: datetime, to_time: datetime) -> list[dict]:
         response = await client.get("/measurements", params={
             "asset_variable_id": variable_id,
-            "from": from_time.isoformat(),
-            "to": to_time.isoformat(),
+            "from": _data_service_timestamp(from_time),
+            "to": _data_service_timestamp(to_time),
             "limit": 10000,
         })
         response.raise_for_status()

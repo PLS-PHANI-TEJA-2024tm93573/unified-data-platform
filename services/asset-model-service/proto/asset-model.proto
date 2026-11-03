@@ -36,4 +36,5 @@ message AssetVariable {
   string name = 2;
   string data_type = 3;
   string unit = 4;
+  string asset_variable_id = 5;
 }

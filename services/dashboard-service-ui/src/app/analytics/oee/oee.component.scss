@@ -1,0 +1,9 @@
+.oee-options {
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+
+    ::ng-deep p-select {
+        width: 25%;
+    }
+}

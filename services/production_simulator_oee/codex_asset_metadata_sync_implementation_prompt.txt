@@ -1,0 +1,382 @@
+CODEX IMPLEMENTATION PROMPT Target: GPT-6 Luna with High Thinking Task:
+Implement debounced Asset Model metadata synchronization through NATS.
+
+CONTEXT
+
+This repository contains the Asset Model Service and Data Service for an
+IIoT platform. The services are independent.
+
+Asset Model Service is the source of truth for: - Asset hierarchy -
+Asset types - Variable definitions - Asset-type/variable associations -
+Asset/variable assignments
+
+Data Service maintains a local metadata cache used to resolve and
+validate asset-variable identifiers when handling telemetry and
+measurement-history requests.
+
+A real issue was observed: Data Service can return 404 for an
+asset-variable ID that exists in Asset Model Service because Data
+Service’s local metadata cache was populated before the
+hierarchy/assignments were created, or became stale after later metadata
+changes.
+
+A Bash provisioning script creates/reuses multiple asset types,
+variables, assets, and associations by calling the existing Asset Model
+APIs. The script must remain unchanged. Existing API contracts must
+remain unchanged.
+
+OBJECTIVE
+
+Implement a minimal, reliable, debounced metadata synchronization
+mechanism.
+
+Use this exact NATS subject:
+
+    asset.metadata.update
+
+After successful metadata mutations, Asset Model Service should mark
+metadata as changed. Multiple changes that occur close together should
+be grouped. When no further metadata mutation occurs within a
+configurable quiet period, Asset Model Service should publish one
+synchronization notification on asset.metadata.update.
+
+Data Service must subscribe to this subject. On receiving a valid
+notification, it must fetch the latest complete asset hierarchy from the
+existing Asset Model API, rebuild its metadata cache, and atomically
+replace the active cache.
+
+The event is only a notification. Do not publish the full hierarchy in
+the NATS payload.
+
+IMPORTANT DESIGN DECISIONS
+
+1.  Asset Model Service remains the authoritative source of metadata.
+2.  Data Service owns its local metadata cache.
+3.  Do not make KPI Service responsible for metadata synchronization.
+4.  Do not modify existing API routes, request schemas, response
+    schemas, or the Bash provisioning script.
+5.  Do not publish one event for every individual mutation. Use a
+    debounce timer.
+6.  Only successful metadata-changing database operations should trigger
+    the change detector.
+7.  GET/read operations must never trigger metadata-change detection.
+8.  A get-or-create operation that finds an existing object and performs
+    no write must not trigger metadata-change detection.
+9.  Failed requests and rolled-back transactions must not trigger
+    metadata-change detection.
+10. Trigger the change detector only after the corresponding database
+    transaction commits successfully.
+11. Keep the implementation small and consistent with the repository’s
+    existing architecture, language, framework, dependency-injection,
+    logging, configuration, and NATS patterns.
+12. Do not introduce unnecessary abstractions, dependencies, services,
+    refactors, API changes, or unrelated cleanup.
+
+PHASE 1 — INSPECT BEFORE CHANGING CODE
+
+First inspect the repository and identify:
+
+-   Asset Model Service project structure and framework.
+-   Data Service project structure and framework.
+-   Existing NATS connection, publisher, subscriber, subject naming,
+    serialization, and lifecycle patterns.
+-   Asset Model database transaction boundaries and repository/service
+    methods.
+-   All existing metadata-changing API handlers and the underlying
+    methods they call.
+-   The existing endpoint used to retrieve the full hierarchy. Prefer
+    the existing GET /assets/hierarchy API if that is the route
+    implemented in this repository.
+-   How Data Service currently builds, stores, reads, and refreshes its
+    metadata cache.
+-   How Data Service currently handles unknown asset-variable IDs.
+-   Existing health/readiness and logging conventions.
+
+Do not assume the implementation language or class names. Follow the
+actual code.
+
+Before editing, provide a concise implementation plan naming the exact
+files/classes/methods you intend to change. Then implement the changes.
+Do not stop after producing the plan.
+
+PHASE 2 — ASSET MODEL SERVICE CHANGES
+
+A. Centralized metadata change detection
+
+Implement one centralized internal mechanism that can be invoked by
+metadata mutation application/service methods after successful
+persistence.
+
+Do not scatter independent timer implementations across controllers.
+
+The change detector should: - Mark metadata as dirty. - Reset the
+debounce timer whenever another successful metadata mutation occurs. -
+Use a configurable quiet period, initially defaulting to 3000
+milliseconds (3 seconds). - Read the setting from the project’s existing
+configuration approach (environment/configuration file), following
+current conventions. - When the quiet period expires, publish a
+notification to NATS subject asset.metadata.update. - Avoid publishing
+if no actual metadata change is pending. - Prevent overlapping or
+duplicate timer callbacks from publishing the same pending change
+unnecessarily. - Handle timer lifecycle correctly during service
+shutdown. - Log meaningful events without excessive per-request noise.
+
+B. Mutation coverage
+
+Inspect all existing metadata mutation paths and invoke the centralized
+change detector after successful database commits for applicable
+operations, including:
+
+-   Asset type create/update/delete.
+-   Variable definition create/update/delete.
+-   Asset-type variable association create/delete.
+-   Asset create/update/delete.
+-   Asset-variable assignment create/delete.
+
+Use the actual routes and operations present in the repository. Do not
+invent endpoints.
+
+Do not trigger on: - GET operations. - Failed writes. - Validation
+failures. - Database failures or rolled-back transactions. - No-op
+operations that did not modify persisted metadata.
+
+If a mutation method performs multiple database operations in a
+transaction, trigger change detection only after the transaction has
+committed successfully. Do not publish before commit.
+
+C. NATS event
+
+Publish to:
+
+    asset.metadata.update
+
+Use the repository’s existing NATS library and connection lifecycle. Do
+not add another NATS client or duplicate connection management.
+
+Use a small versionable JSON notification payload, for example:
+
+{ “eventId”: “unique-event-id”, “eventType”: “ASSET_METADATA_UPDATE”,
+“source”: “asset-model-service”, “timestamp”: “UTC ISO-8601 timestamp”,
+“metadataVersion”: 12 }
+
+Adapt serialization and identifier generation to existing project
+conventions.
+
+If a durable metadata revision already exists, use it. If not, inspect
+whether a minimal durable revision can be added without broad schema
+changes. Do not invent a version that resets unpredictably on every
+process restart and then treat it as globally monotonic.
+
+If implementing durable versioning would require disproportionate
+changes, keep the event payload minimal and document that limitation.
+The synchronization must not depend on a version field unless its
+semantics are reliable.
+
+D. Restart/reliability behavior
+
+Do not claim that an in-memory debounce timer is durable. Inspect the
+existing persistence architecture.
+
+Prefer a minimal implementation that does not lose correctness: - If the
+project already has an outbox or durable event mechanism, use it. - If
+there is no outbox, do not build a large eventing framework. - Clearly
+identify the restart limitation of an in-memory dirty flag/timer in the
+final report. - If a small persisted dirty/revision mechanism fits
+naturally, implement it only if it does not require unrelated redesign.
+
+PHASE 3 — DATA SERVICE CHANGES
+
+A. NATS subscription
+
+Subscribe to:
+
+    asset.metadata.update
+
+Use the existing NATS connection/client and lifecycle patterns. Do not
+create duplicate connections or introduce a new messaging dependency.
+
+Validate the message sufficiently to avoid processing malformed
+payloads. Treat it as a synchronization request, not as a hierarchy
+payload.
+
+B. Fetch authoritative metadata
+
+When the event is received, call the existing Asset Model API to fetch
+the complete hierarchy. Prefer the existing:
+
+    GET /assets/hierarchy
+
+Use the existing configured Asset Model base URL, HTTP client,
+authentication, timeout, and error-handling patterns. Do not hardcode
+localhost or a new service URL.
+
+Do not modify the Asset Model API contract.
+
+C. Safe cache replacement
+
+Inspect the current metadata-cache implementation and adapt it with
+minimal changes.
+
+Required behavior: 1. Fetch the full hierarchy. 2. Validate the
+response. 3. Build a new cache snapshot separately. 4. Only after
+successful fetch and construction, atomically replace the active
+cache/snapshot. 5. Keep the last known-good cache if the fetch or
+construction fails. 6. Do not expose a partially cleared or partially
+populated cache to concurrent readers.
+
+Use the repository’s existing concurrency primitives and patterns. Do
+not add unnecessary complexity.
+
+D. Coalesce concurrent synchronization requests
+
+If a synchronization is already running when another event arrives: - Do
+not launch an unbounded parallel hierarchy fetch. - Coalesce the
+additional request. - Ensure that a change notification received during
+an active sync cannot be silently lost. A simple pending/resync flag or
+equivalent serialized worker is acceptable. - Avoid an older, slower
+fetch overwriting a newer snapshot.
+
+E. Startup synchronization
+
+Ensure Data Service performs an initial metadata synchronization during
+startup, using the same synchronization implementation as the
+NATS-triggered refresh.
+
+Do not wait for the first NATS event before attempting to populate the
+metadata cache.
+
+Respect the service’s existing startup and dependency-initialization
+order.
+
+F. Optional unknown-ID fallback
+
+Inspect the current unknown asset-variable-ID behavior. If it can be
+added with very small, safe changes, implement at most one controlled
+metadata refresh and one retry for an unknown ID. Prevent a retry loop
+and avoid triggering an unbounded number of concurrent refreshes.
+
+Do not change the existing public API response semantics unnecessarily.
+If this fallback would require broad changes, leave it out and report it
+as a possible follow-up rather than expanding scope.
+
+PHASE 4 — PERIODIC RECONCILIATION
+
+NATS Core Pub/Sub notifications may be missed if Data Service is offline
+when a notification is published.
+
+Inspect whether the repository already has a background scheduler or
+hosted-service pattern. If a lightweight periodic reconciliation fits
+naturally, add a configurable periodic refresh as a recovery mechanism.
+Use a conservative default such as 5 minutes, unless the existing
+project has a different convention.
+
+Do not add a new scheduling dependency merely for this feature.
+
+If adding periodic reconciliation would require unnecessary
+infrastructure, do not force it into this change. Clearly report that
+startup sync plus event-driven refresh does not recover a missed event
+until another event or manual restart occurs.
+
+PHASE 5 — TESTS
+
+Add or update focused tests using the repository’s existing test
+framework.
+
+At minimum, cover the applicable cases:
+
+ASSET MODEL SERVICE 1. A successful metadata mutation marks metadata
+dirty. 2. Multiple mutations inside the debounce window reset the timer
+and result in one publish after the quiet period. 3. A single mutation
+eventually publishes one event. 4. GET operations do not publish. 5.
+Failed writes and rolled-back transactions do not publish. 6. No-op
+get-or-create operations do not publish. 7. The configured debounce
+interval is honored. 8. Timer/service shutdown does not leave an
+unhandled callback or publish after disposal. 9. NATS publish failure is
+logged/handled according to existing retry/error conventions.
+
+DATA SERVICE 1. A valid asset.metadata.update event triggers hierarchy
+retrieval. 2. The correct existing Asset Model endpoint/configuration is
+used. 3. A successful fetch replaces the cache. 4. A failed fetch
+preserves the last known-good cache. 5. Two closely spaced events do not
+create unbounded concurrent refreshes. 6. An event received during an
+active refresh causes a subsequent refresh if needed. 7. Startup invokes
+the same synchronization path. 8. Malformed events are handled safely.
+9. If periodic reconciliation is implemented, test its scheduling and
+cancellation. 10. If unknown-ID fallback is implemented, test that it
+refreshes and retries at most once.
+
+Use fake timers and mocked NATS/HTTP clients where appropriate. Avoid
+tests that depend on real network services.
+
+PHASE 6 — VALIDATION
+
+Run the relevant existing tests, formatter, linter, and build commands
+for both services where practical.
+
+Do not claim tests passed unless they were actually executed. Report any
+failures and distinguish pre-existing failures from failures introduced
+by this change.
+
+NON-GOALS — DO NOT DO THESE
+
+-   Do not change existing API routes or request/response contracts.
+-   Do not modify the Bash provisioning script.
+-   Do not make the Bash script publish directly to NATS.
+-   Do not publish the entire hierarchy in the NATS event.
+-   Do not make KPI Service subscribe to Asset Model events.
+-   Do not replace the existing NATS infrastructure.
+-   Do not redesign the asset hierarchy or metadata schema.
+-   Do not refactor unrelated code.
+-   Do not add broad abstractions or dependencies for a small feature.
+-   Do not implement an exact bulk-operation lifecycle; the selected
+    design uses a debounce quiet period.
+-   Do not assume debounce guarantees exactly one event per script
+    execution.
+
+ACCEPTANCE CRITERIA
+
+The implementation is acceptable when:
+
+1.  A successful metadata-changing operation in Asset Model Service
+    marks metadata dirty after commit.
+2.  Multiple close-together mutations are grouped by a configurable
+    debounce timer.
+3.  After the quiet period, Asset Model Service publishes a notification
+    on exactly asset.metadata.update.
+4.  Read-only, failed, rolled-back, and no-op operations do not publish.
+5.  The Bash provisioning script continues to work without modification.
+6.  Data Service subscribes to asset.metadata.update.
+7.  Data Service fetches the full latest hierarchy from the existing
+    Asset Model API.
+8.  Data Service safely builds and atomically replaces its metadata
+    cache.
+9.  A failed synchronization preserves the previous cache.
+10. Startup synchronization is implemented.
+11. Concurrent notifications are coalesced safely.
+12. Existing tests and API behavior remain intact, except for the
+    intended synchronization behavior.
+
+FINAL RESPONSE REQUIRED
+
+After implementation, provide:
+
+1.  A concise summary of the design implemented.
+2.  Exact files changed in Asset Model Service.
+3.  Exact files changed in Data Service.
+4.  The debounce configuration name and default value.
+5.  The NATS subject and event payload shape.
+6.  How transaction commit ordering is guaranteed.
+7.  How Data Service prevents partial cache replacement and overlapping
+    refreshes.
+8.  Whether startup synchronization and periodic reconciliation were
+    implemented.
+9.  Tests/build/lint commands actually run and their results.
+10. Any known limitations, especially:
+    -   Debounce does not guarantee exactly one event per script run.
+    -   An in-memory timer can lose pending work on Asset Model restart
+        unless durable state/outbox is implemented.
+    -   NATS Core Pub/Sub can miss notifications while Data Service is
+        offline unless reconciliation or JetStream is used.
+
+Work carefully. Inspect first, make the smallest correct set of changes,
+and avoid unnecessary changes.

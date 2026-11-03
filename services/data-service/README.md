@@ -25,6 +25,16 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
+## API documentation
+
+The service exposes its generated Swagger UI at `http://localhost:3001/api` when running locally. The checked-in OpenAPI 3.0 specification and Postman assets are in `docs/api` and `docs/postman`:
+
+- [OpenAPI specification](docs/api/openapi.yaml)
+- [Postman collection](docs/postman/data-service.postman_collection.json)
+- [Local Postman environment](docs/postman/data-service.postman_environment.json)
+
+Import the collection and environment into Postman. Set `assetVariableId` to an AssetVariable UUID synchronized into this service's metadata cache and adjust `from`/`to` to query available readings. The local server uses port `3001` by default.
+
 ## Project setup
 
 ```bash

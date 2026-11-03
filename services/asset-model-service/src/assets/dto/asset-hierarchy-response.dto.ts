@@ -4,6 +4,9 @@ export class AssetHierarchyVariableDto {
   @ApiProperty({ format: 'uuid', example: '6b0f8c1e-1c87-4ec5-8f1a-4a7ce5e5d1a1' })
   id!: string;
 
+  @ApiProperty({ format: 'uuid', description: 'AssetVariable assignment identifier used by Data Service' })
+  assetVariableId!: string;
+
   @ApiProperty({ example: 'temperature' })
   name!: string;
 
