@@ -7,6 +7,9 @@ import { TabsModule } from 'primeng/tabs';
 import { SelectModule } from 'primeng/select';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { ButtonModule } from 'primeng/button';
+import { ChartModule } from 'primeng/chart'
+import { DatePickerModule } from 'primeng/datepicker';
+import { MultiSelectModule } from 'primeng/multiselect';
 
 
 import { AnalyticsRootComponent } from './analytics-root/analytics-root.component';
@@ -28,8 +31,12 @@ import { TelemetryComponent } from './telemetry/telemetry.component';
     CardModule,
     TabsModule,
     SelectModule,
+    ChartModule,
     SelectButtonModule,
     ButtonModule,
+    DatePickerModule,
+    MultiSelectModule,
+
     AnalyticsRoutingModule
   ]
 })

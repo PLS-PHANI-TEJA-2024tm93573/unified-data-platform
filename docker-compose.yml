@@ -42,6 +42,8 @@ services:
       DATABASE_NAME: ${POSTGRES_DB:-unified_data_platform}
       DATABASE_USER: ${POSTGRES_USER:-postgres}
       DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      NATS_URL: nats://nats:4222
+      ASSET_METADATA_DEBOUNCE_MS: ${ASSET_METADATA_DEBOUNCE_MS:-3000}
     ports:
       - "3000:3000"
       - "50051:50051"
@@ -67,7 +69,9 @@ services:
       DATABASE_NAME: ${POSTGRES_DB:-unified_data_platform}
       DATABASE_USER: ${POSTGRES_USER:-postgres}
       DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      ASSET_MODEL_GRPC_URL: asset-model-service:50051
+      ASSET_MODEL_URL: http://asset-model-service:3000
+      ASSET_MODEL_HTTP_TIMEOUT_MS: ${ASSET_MODEL_HTTP_TIMEOUT_MS:-10000}
+      ASSET_METADATA_RECONCILIATION_MS: ${ASSET_METADATA_RECONCILIATION_MS:-300000}
       NATS_URL: nats://nats:4222
     ports:
       - "3001:3001"
@@ -92,7 +96,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-unified_data_platform}
       ASSET_CONFIG_JSON: ${ASSET_CONFIG_JSON:-}
       COUNTER_BASELINE_DAYS: ${COUNTER_BASELINE_DAYS:-1}
-      POLL_INTERVAL_SECONDS: ${POLL_INTERVAL_SECONDS:-5}
+      POLL_INTERVAL_SECONDS: ${POLL_INTERVAL_SECONDS:-7}
     ports:
       - "8000:8000"
     restart: unless-stopped

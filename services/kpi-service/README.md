@@ -16,7 +16,9 @@ At startup, `ASSET_MODEL_URL` (default `http://localhost:3000`) is queried throu
 
 ## Configuration
 
-Asset IDs and variable assignment IDs are populated automatically at startup. `ASSET_CONFIG_JSON` is optional and can provide per-asset OEE tuning values; synchronized IDs from Asset Model take precedence. OEE is initially enabled only for `ProductionLine01` and `Packager`. The remaining assets are documented and can be enabled when their production and quality measurements are meaningful.
+Asset IDs and variable assignment IDs are populated automatically at startup. `ASSET_CONFIG_JSON` can override per-asset OEE tuning. For the simulator demo, the service defaults the ideal rate to 60 bottles/minute for `ProductionLine01` and `Packager`. OEE is initially enabled only for those two assets. The remaining assets are documented and can be enabled when their production and quality measurements are meaningful.
+
+`CORS_ORIGINS` is a comma-separated list of browser origins allowed to call the HTTP API. It defaults to `http://localhost:4200` and `http://127.0.0.1:4200`. Add the dashboard's deployed origin when hosting the UI elsewhere.
 
 ```json
 {
@@ -83,7 +85,7 @@ The non-enabled assets are prepared for later configuration. Their mappings must
 - `GET /health`
 - `GET /api/v1/oee/{asset_id}?start=<ISO-8601>&end=<ISO-8601>` calculates one reading from Data Service history.
 - `GET /api/v1/oee/{asset_id}/history?start=<ISO-8601>&end=<ISO-8601>` returns persisted readings for the inclusive window.
-- `WS /api/v1/oee/{asset_id}/live` streams a rolling polling-window reading while a client is connected.
+- `WS /api/v1/oee/{asset_id}/live` streams OEE through the current time at each poll. It starts at the first complete telemetry sample when shift-start history is unavailable, and re-anchors after an unplanned data gap or counter reset. The payload includes `calculation_start` and `calculation_period` (`since_start` or `since_recovery`).
 - Interactive OpenAPI documentation: `/docs`; schema: `/openapi.json`.
 
 Example response:
@@ -105,3 +107,5 @@ Example response:
 ```
 
 Run `docker compose up --build` from this directory. Set `DATA_SERVICE_URL`, `DATABASE_URL`, and `ASSET_CONFIG_JSON` in the environment or a local `.env` file.
+
+For the live simulator OEE behavior and rollback steps, see [Live OEE Demo Change and Rollback Notes](Docs/live-oee-demo-rollback.md).

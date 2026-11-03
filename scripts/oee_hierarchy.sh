@@ -4,11 +4,11 @@
 #
 # Requirements: bash, curl, jq
 # Usage:
-#   chmod +x create_production_line_oee_hierarchy.sh
-#   ./create_production_line_oee_hierarchy.sh
+#   chmod +x oee_hierarchy.sh
+#   ./oee_hierarchy.sh
 #
 # Optional:
-#   BASE_URL=http://localhost:3000 ./create_production_line_oee_hierarchy.sh
+#   BASE_URL=http://localhost:3000 ./oee_hierarchy.sh
 #
 # The script reuses existing asset types and variable definitions by name.
 # It creates the assets if they do not already exist by name. It also checks
@@ -265,6 +265,11 @@ add_var bottle_fill bottle_fill_level FLOAT mL "Measured bottle fill quantity"
 add_var target_fill target_fill_level FLOAT mL "Required bottle fill quantity"
 add_var jam_count jam_count INTEGER events "Cumulative packaging jam events"
 
+# Inputs used by the KPI service to calculate OEE. Availability, performance,
+# quality, and OEE are calculated outputs; they are not telemetry variables.
+OEE_LINE_VARIABLES=(line_status line_total line_good line_reject)
+OEE_PACKAGER_VARIABLES=(machine_status line_total good_bottles rejected_bottles)
+
 # ---------------------------------------------------------------------------
 # 3. Associate variable definitions with asset types
 #    required=false because this demo may simulate only a subset initially.
@@ -280,13 +285,13 @@ associate() {
   done
 }
 
-associate "$T_LINE" line_status line_good line_reject line_total
+associate "$T_LINE" "${OEE_LINE_VARIABLES[@]}"
 associate "$T_STATION" station_status active_equipment
 associate "$T_MIXER" machine_status time_running ingredient_weight mixing_speed batch_count batch_reject mixer_cycle batch_id
 associate "$T_BOILER_HUB" hub_status active_boilers available_boilers
 associate "$T_BOILER" machine_status time_running temperature target_temperature pressure target_pressure heating_count boiler_reject heating_cycle_time batch_id heating_active
 associate "$T_PUMP" machine_status time_running volume_pumped flow_rate target_flow transfer_count transfer_reject transfer_time batch_id
-associate "$T_PACKAGER" machine_status time_running line_total good_bottles rejected_bottles production_speed bottle_fill target_fill jam_count batch_id
+associate "$T_PACKAGER" "${OEE_PACKAGER_VARIABLES[@]}" time_running production_speed bottle_fill target_fill jam_count batch_id
 
 # ---------------------------------------------------------------------------
 # 4. Create assets in parent-before-child order
@@ -317,14 +322,14 @@ assign() {
   done
 }
 
-assign "$A_LINE" line_status line_good line_reject line_total
+assign "$A_LINE" "${OEE_LINE_VARIABLES[@]}"
 assign "$A_STATION" station_status active_equipment
 assign "$A_MIXER" machine_status time_running ingredient_weight mixing_speed batch_count batch_reject mixer_cycle batch_id
 assign "$A_HUB" hub_status active_boilers available_boilers
 assign "$A_BOILER1" machine_status time_running temperature target_temperature pressure target_pressure heating_count boiler_reject heating_cycle_time batch_id heating_active
 assign "$A_BOILER2" machine_status time_running temperature target_temperature pressure target_pressure heating_count boiler_reject heating_cycle_time batch_id heating_active
 assign "$A_PUMP" machine_status time_running volume_pumped flow_rate target_flow transfer_count transfer_reject transfer_time batch_id
-assign "$A_PACKAGER" machine_status time_running line_total good_bottles rejected_bottles production_speed bottle_fill target_fill jam_count batch_id
+assign "$A_PACKAGER" "${OEE_PACKAGER_VARIABLES[@]}" time_running production_speed bottle_fill target_fill jam_count batch_id
 
 # ---------------------------------------------------------------------------
 # 6. Print resulting hierarchy and audit metadata

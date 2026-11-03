@@ -1,1 +1,81 @@
-<p>telemetry works!</p>
+<section class="telemetry-page">
+    <div class="telemetry-options">
+        <p-select
+            [options]="assets"
+            [(ngModel)]="selectedAssetId"
+            (ngModelChange)="onAssetChange($event)"
+            [loading]="isLoadingAssets"
+            [checkmark]="true"
+            [showClear]="true"
+            optionLabel="name"
+            optionValue="id"
+            placeholder="Select an Asset"
+            class="asset-select"
+        />
+
+        <p-multiselect
+            [options]="variables"
+            [(ngModel)]="selectedVariableIds"
+            (ngModelChange)="onVariablesChange()"
+            [disabled]="!selectedAssetId || isLoadingHistory"
+            [showClear]="true"
+            optionLabel="name"
+            optionValue="assetVariableId"
+            placeholder="Select Variables"
+            display="chip"
+            class="variable-select"
+        />
+
+        <p-datepicker
+            [(ngModel)]="historyStart"
+            [disabled]="isLoadingHistory"
+            [showIcon]="true"
+            [showTime]="true"
+            [showSeconds]="true"
+            hourFormat="24"
+            dateFormat="yy-mm-dd"
+            placeholder="From date and time"
+            inputId="telemetry-history-start"
+        />
+
+        <p-datepicker
+            [(ngModel)]="historyEnd"
+            [disabled]="isLoadingHistory"
+            [showIcon]="true"
+            [showTime]="true"
+            [showSeconds]="true"
+            hourFormat="24"
+            dateFormat="yy-mm-dd"
+            placeholder="To date and time"
+            inputId="telemetry-history-end"
+        />
+
+        <p-button
+            label="Load History"
+            icon="pi pi-history"
+            [loading]="isLoadingHistory"
+            [disabled]="isLoadDisabled"
+            (onClick)="loadHistory()"
+            severity="contrast"
+        />
+
+        <small *ngIf="errorMessage" class="telemetry-error" role="alert">
+            {{ errorMessage }}
+        </small>
+    </div>
+
+    <section class="telemetry-card" aria-label="Telemetry history chart">
+        <div class="telemetry-chart" *ngIf="chartData.datasets.length > 0; else emptyChart">
+            <p-chart
+                type="line"
+                [data]="chartData"
+                [options]="chartOptions"
+            />
+        </div>
+        <ng-template #emptyChart>
+            <div class="telemetry-empty">
+                Select an asset, variables, and time range to load telemetry history.
+            </div>
+        </ng-template>
+    </section>
+</section>

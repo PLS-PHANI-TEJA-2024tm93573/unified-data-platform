@@ -5,6 +5,7 @@ import { VariableDefinitionService } from './services/variable-definition.servic
 import { VariableDefinitionController } from './controllers/variable-definition.controller';
 import { AssetTypeVariable } from '../asset-types/entities/asset-type-variable.entity';
 import { AssetVariable } from '../assets/entities/asset-variable.entity';
+import { MetadataModule } from '../metadata/metadata.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { AssetVariable } from '../assets/entities/asset-variable.entity';
       AssetTypeVariable,
       AssetVariable,
     ]),
+    MetadataModule,
   ],
   controllers: [VariableDefinitionController],
   providers: [VariableDefinitionService],

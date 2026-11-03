@@ -4,19 +4,16 @@ import { AppService } from './app.service';
 import { HealthController } from './health/health.controller';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { GrpcModule } from './grpc/grpc.module';
 import { DataServiceVariable } from './database/entities/data-service-variable.entity';
 import { Measurement } from './database/entities/measurement.entity';
-import { AssetModelSyncService } from './asset-model/asset-model-sync.service';
 import { NatsModule } from './nats/nats.module';
 import { MeasurementsModule } from './measurements/measurements.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true
+      isGlobal: true,
     }),
-    GrpcModule,
     NatsModule,
     MeasurementsModule,
     TypeOrmModule.forFeature([DataServiceVariable, Measurement]),
@@ -29,9 +26,9 @@ import { MeasurementsModule } from './measurements/measurements.module';
       database: process.env.DATABASE_NAME,
       autoLoadEntities: true,
       synchronize: false,
-    })
+    }),
   ],
   controllers: [AppController, HealthController],
-  providers: [AppService, AssetModelSyncService],
+  providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

@@ -7,13 +7,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { CreateAssetTypeDto } from '../dto/create-asset-type.dto';
-import { GetAssetTypesQueryDto } from '../dto/get-asset-types-query.dto';
 import { AssetTypeVariable } from '../entities/asset-type-variable.entity';
 import { VariableDefinition } from '../../variables/entities/variable-definition.entity';
 import { AddAssetTypeVariableDto } from '../dto/add-asset-type-variable.dto';
 import { UpdateAssetTypeDto } from '../dto/update-asset-type.dto';
 import { Asset } from '../../assets/entities/asset.entity';
 import { AssetVariable } from '../../assets/entities/asset-variable.entity';
+import { MetadataChangeDetectorService } from '../../metadata/metadata-change-detector.service';
 
 @Injectable()
 export class AssetTypeService {
@@ -32,6 +32,7 @@ export class AssetTypeService {
 
     @InjectRepository(AssetVariable)
     private readonly assetVariableRepository: Repository<AssetVariable>,
+    private readonly metadataChanges: MetadataChangeDetectorService,
   ) {}
 
   async create(dto: CreateAssetTypeDto): Promise<AssetType> {
@@ -47,7 +48,9 @@ export class AssetTypeService {
 
     const assetType = this.assetTypeRepository.create(dto);
 
-    return this.assetTypeRepository.save(assetType);
+    const saved = await this.assetTypeRepository.save(assetType);
+    this.metadataChanges.markChanged();
+    return saved;
   }
 
   getAllAssetTypes() {
@@ -79,8 +82,14 @@ export class AssetTypeService {
       }
     }
 
+    const changed = Object.entries(dto).some(
+      ([key, value]) => assetType[key] !== value,
+    );
+    if (!changed) return assetType;
     Object.assign(assetType, dto);
-    return this.assetTypeRepository.save(assetType);
+    const saved = await this.assetTypeRepository.save(assetType);
+    this.metadataChanges.markChanged();
+    return saved;
   }
 
   async remove(id: string): Promise<{ message: string }> {
@@ -97,6 +106,7 @@ export class AssetTypeService {
     }
 
     await this.assetTypeRepository.remove(assetType);
+    this.metadataChanges.markChanged();
     return { message: `Asset type '${assetType.name}' deleted` };
   }
 
@@ -145,7 +155,10 @@ export class AssetTypeService {
       required: dto.required,
     });
 
-    return this.assetTypeVariableRepository.save(assetTypeVariable);
+    const saved =
+      await this.assetTypeVariableRepository.save(assetTypeVariable);
+    this.metadataChanges.markChanged();
+    return saved;
   }
 
   async removeVariable(assetTypeId: string, variableDefintionId: string) {
@@ -178,6 +191,7 @@ export class AssetTypeService {
     }
 
     await this.assetTypeVariableRepository.remove(association);
+    this.metadataChanges.markChanged();
     return { message: 'Asset type variable association deleted' };
   }
 

@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   ConflictException,
-  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -16,6 +15,7 @@ import { VariableDefinition } from '../../variables/entities/variable-definition
 import { AssetTypeVariable } from '../../asset-types/entities/asset-type-variable.entity';
 import { AddAssetVariableDto } from '../dto/add-asset-varaible.dto';
 import { UpdateAssetDto } from '../dto/update-asset.dto';
+import { MetadataChangeDetectorService } from '../../metadata/metadata-change-detector.service';
 
 export type AssetHierarchyVariable = {
   id: string;
@@ -53,7 +53,8 @@ export class AssetService {
 
     @InjectRepository(AssetTypeVariable)
     private readonly assetTypeVariableRepository: Repository<AssetTypeVariable>,
-  ) { }
+    private readonly metadataChanges: MetadataChangeDetectorService,
+  ) {}
 
   async create(dto: CreateAssetDto): Promise<Asset> {
     const assetType = await this.assetTypeRepository.findOne({
@@ -94,7 +95,9 @@ export class AssetService {
       parentAsset,
     });
 
-    return this.assetRepository.save(asset);
+    const saved = await this.assetRepository.save(asset);
+    this.metadataChanges.markChanged();
+    return saved;
   }
 
   async getAllAssets(): Promise<Asset[]> {
@@ -157,6 +160,15 @@ export class AssetService {
       throw new NotFoundException(`Asset with id '${id}' not found`);
     }
 
+    const initial = {
+      name: asset.name,
+      description: asset.description,
+      location: asset.location,
+      metadata: asset.metadata,
+      assetTypeId: asset.assetType.id,
+      parentAssetId: asset.parentAsset?.id ?? null,
+    };
+
     if (dto.assetTypeId && dto.assetTypeId !== asset.assetType.id) {
       const assetType = await this.assetTypeRepository.findOne({
         where: { id: dto.assetTypeId },
@@ -218,7 +230,17 @@ export class AssetService {
     if (dto.location !== undefined) asset.location = dto.location;
     if (dto.metadata !== undefined) asset.metadata = dto.metadata;
 
-    return this.assetRepository.save(asset);
+    const changed =
+      initial.name !== asset.name ||
+      initial.description !== asset.description ||
+      initial.location !== asset.location ||
+      JSON.stringify(initial.metadata) !== JSON.stringify(asset.metadata) ||
+      initial.assetTypeId !== asset.assetType.id ||
+      initial.parentAssetId !== (asset.parentAsset?.id ?? null);
+    if (!changed) return asset;
+    const saved = await this.assetRepository.save(asset);
+    this.metadataChanges.markChanged();
+    return saved;
   }
 
   async remove(id: string): Promise<{ message: string }> {
@@ -240,6 +262,7 @@ export class AssetService {
     }
 
     await this.assetRepository.remove(asset);
+    this.metadataChanges.markChanged();
     return { message: `Asset '${asset.name}' deleted` };
   }
 
@@ -312,7 +335,9 @@ export class AssetService {
       isCustom: false,
     });
 
-    return this.assetVariableRepository.save(assetVariable);
+    const saved = await this.assetVariableRepository.save(assetVariable);
+    this.metadataChanges.markChanged();
+    return saved;
   }
 
   async removeVariable(
@@ -339,6 +364,7 @@ export class AssetService {
     }
 
     await this.assetVariableRepository.remove(assetVariable);
+    this.metadataChanges.markChanged();
     return { message: 'Asset variable association deleted' };
   }
 
@@ -417,36 +443,35 @@ export class AssetService {
     // return {
     //   roots,
     // };
-    return  isGrpc ? { roots } : this.mapToPrimeNgTreeNodes(roots)
+    return isGrpc ? { roots } : this.mapToPrimeNgTreeNodes(roots);
   }
 
- private mapToPrimeNgTreeNodes(nodes: AssetHierarchyNode[]): any[] {
-  return nodes.map((node) => ({
-    key: node.id,
-    label: node.name,
-    expanded: true,
-    data: {
-      id: node.id,
-      name: node.name,
-      assetType: node.assetType,
-      variables: node.variables,
-    },
-    children: node.children?.length ? this.mapToPrimeNgTreeNodes(node.children) : [],
-  }));
-}
+  private mapToPrimeNgTreeNodes(nodes: AssetHierarchyNode[]): any[] {
+    return nodes.map((node) => ({
+      key: node.id,
+      label: node.name,
+      expanded: true,
+      data: {
+        id: node.id,
+        name: node.name,
+        assetType: node.assetType,
+        variables: node.variables,
+      },
+      children: node.children?.length
+        ? this.mapToPrimeNgTreeNodes(node.children)
+        : [],
+    }));
+  }
 
-
-  async getChildAssets(assetId:string) {
+  async getChildAssets(assetId: string) {
     const parentAsset = await this.assetRepository.findOne({
       where: {
-        id: assetId
+        id: assetId,
       },
     });
 
     if (!parentAsset) {
-      throw new NotFoundException(
-        `Asset with ID ${assetId} not found`,
-      );
+      throw new NotFoundException(`Asset with ID ${assetId} not found`);
     }
 
     const children = await this.assetRepository
@@ -457,6 +482,5 @@ export class AssetService {
       .getMany();
 
     return children;
-
   }
 }
