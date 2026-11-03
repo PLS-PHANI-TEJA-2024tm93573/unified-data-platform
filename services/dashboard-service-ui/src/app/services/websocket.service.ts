@@ -13,6 +13,8 @@ export interface OeeReading {
   total_output?: number | null;
   good_output?: number | null;
   rejected_output?: number | null;
+  calculation_start?: string;
+  calculation_period?: 'since_start' | 'since_recovery';
 }
 
 const KPI_SERVICE_BASE_URL = 'http://localhost:8000';

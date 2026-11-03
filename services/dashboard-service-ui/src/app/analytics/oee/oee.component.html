@@ -1,3 +1,4 @@
+
 <div class="oee-options">
     <p-selectbutton
         [options]="stateOptions"
@@ -17,33 +18,112 @@
         optionLabel="name"
         optionValue="id"
         placeholder="Select an Asset"
-        class="w-full md:w-75"
+        class="asset-select"
     />
 
-    <p-select
-        *ngIf="value === 'history' && selectedAssetId"
-        [options]="availableVariables"
-        [(ngModel)]="selectedVariableId"
-        [checkmark]="true"
-        [showClear]="true"
-        optionLabel="name"
-        optionValue="id"
-        placeholder="Select a Variable"
-        class="w-full md:w-75"
+    <p-datepicker
+        *ngIf="value === 'history'"
+        [(ngModel)]="historyStart"
+        [showIcon]="true"
+        [showTime]="true"
+        [showSeconds]="true"
+        hourFormat="24"
+        dateFormat="yy-mm-dd"
+        placeholder="From date and time"
+        inputId="oee-history-start"
     />
+
+    <p-datepicker
+        *ngIf="value === 'history'"
+        [(ngModel)]="historyEnd"
+        [showIcon]="true"
+        [showTime]="true"
+        [showSeconds]="true"
+        hourFormat="24"
+        dateFormat="yy-mm-dd"
+        placeholder="To date and time"
+        inputId="oee-history-end"
+    />
+
+    <small *ngIf="historyError" class="history-error" role="alert">
+        {{ historyError }}
+    </small>
 
     <p-button
         [label]="connectionLabel"
-        icon="pi pi-play"
-        [loading]="isConnectionEstablished"
+        [icon]="value === 'live' ? 'pi pi-play' : 'pi pi-history'"
+        [loading]="isConnectionEstablished || isHistoryLoading"
         [disabled]="isLoadDataDisabled"
         (onClick)="connect()"
         severity="contrast"
     />
+</div>
 
+<div class="oee-dashboard">
 
-    {{'Live OEE reading:'}}
+    <!-- KPI Gauges -->
+    <div class="gauge-container">
 
-    {{ reading }}
+    <div class="gauge-card">
+        <h4>Availability</h4>
+
+        <div class="gauge-chart">
+            <p-chart
+                #availabilityChart
+                type="doughnut"
+                [data]="availabilityData"
+                [options]="gaugeOptions"
+                [plugins]="gaugePlugins"
+            />
+        </div>
+    </div>
+
+    <div class="gauge-card">
+        <h4>Performance</h4>
+
+        <div class="gauge-chart">
+            <p-chart
+                #performanceChart
+                type="doughnut"
+                [data]="performanceData"
+                [options]="gaugeOptions"
+                [plugins]="gaugePlugins"
+            />
+        </div>
+    </div>
+
+    <div class="gauge-card">
+        <h4>Quality</h4>
+
+        <div class="gauge-chart">
+            <p-chart
+                #qualityChart
+                type="doughnut"
+                [data]="qualityData"
+                [options]="gaugeOptions"
+                [plugins]="gaugePlugins"
+            />
+        </div>
+    </div>
+
+</div>
+
+    <!-- Overall Equipment Effectiveness Trend -->
+    <div class="oee-card">
+
+        <div class="oee-card-header">
+            <span>Overall OEE</span>
+            <strong>{{ oee }}%</strong>
+        </div>
+
+        <div class="oee-chart">
+            <p-chart
+                type="line"
+                [data]="oeeChartData"
+                [options]="oeeChartOptions"
+            />
+        </div>
+
+    </div>
 
 </div>

@@ -96,7 +96,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-unified_data_platform}
       ASSET_CONFIG_JSON: ${ASSET_CONFIG_JSON:-}
       COUNTER_BASELINE_DAYS: ${COUNTER_BASELINE_DAYS:-1}
-      POLL_INTERVAL_SECONDS: ${POLL_INTERVAL_SECONDS:-5}
+      POLL_INTERVAL_SECONDS: ${POLL_INTERVAL_SECONDS:-7}
     ports:
       - "8000:8000"
     restart: unless-stopped
