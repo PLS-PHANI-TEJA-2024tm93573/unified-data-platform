@@ -5,8 +5,8 @@ import { AssetType } from '../entities/asset-type.entity';
 const repository = () => ({
   findOne: jest.fn(),
   find: jest.fn(),
-  create: jest.fn((value) => value),
-  save: jest.fn((value) => Promise.resolve(value)),
+  create: jest.fn((value: unknown) => value),
+  save: jest.fn((value: unknown) => Promise.resolve(value)),
   count: jest.fn(),
   remove: jest.fn(),
 });
@@ -17,6 +17,7 @@ describe('AssetTypeService', () => {
   let variableRepository: ReturnType<typeof repository>;
   let assetRepository: ReturnType<typeof repository>;
   let assetVariableRepository: ReturnType<typeof repository>;
+  let markChanged: jest.Mock;
   let service: AssetTypeService;
 
   beforeEach(() => {
@@ -25,12 +26,14 @@ describe('AssetTypeService', () => {
     variableRepository = repository();
     assetRepository = repository();
     assetVariableRepository = repository();
+    markChanged = jest.fn();
     service = new AssetTypeService(
       assetTypeRepository as never,
       associationRepository as never,
       variableRepository as never,
       assetRepository as never,
       assetVariableRepository as never,
+      { markChanged } as never,
     );
   });
 
@@ -40,8 +43,10 @@ describe('AssetTypeService', () => {
     assetTypeRepository.create.mockReturnValue(assetType);
 
     await expect(service.create({ name: 'MOTOR' })).resolves.toBe(assetType);
+    expect(markChanged).toHaveBeenCalledTimes(1);
     assetTypeRepository.findOne.mockResolvedValue(assetType);
     await expect(service.getAssetTypeById('type-id')).resolves.toBe(assetType);
+    expect(markChanged).toHaveBeenCalledTimes(1);
   });
 
   it('rejects duplicate names and missing resources', async () => {
@@ -100,9 +105,8 @@ describe('AssetTypeService', () => {
     associationRepository.findOne.mockResolvedValue({ id: 'association-id' });
     assetVariableRepository.findOne.mockResolvedValue(null);
 
-    await expect(
-      service.removeVariable('type-id', 'variable-id'),
-    ).resolves.toMatchObject({ message: expect.any(String) });
+    const result = await service.removeVariable('type-id', 'variable-id');
+    expect(result.message).toContain('deleted');
     expect(associationRepository.remove).toHaveBeenCalled();
   });
 });

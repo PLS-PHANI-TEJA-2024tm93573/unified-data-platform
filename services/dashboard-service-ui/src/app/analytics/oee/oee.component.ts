@@ -15,6 +15,8 @@ export class OeeComponent implements OnInit, OnDestroy {
     { label: 'History', value: 'history' }
   ];
 
+  reading! : any;
+
   value = 'live';
   allAssets: any[] = [];
   availableAssets: any[] = [];
@@ -118,6 +120,7 @@ export class OeeComponent implements OnInit, OnDestroy {
       switchMap(() => this.websocketService.connect(assetId))
     ).subscribe({
       next: (reading) => {
+        this.reading = JSON.stringify(reading);
         console.log('Live OEE reading:', reading);
         this.isConnectionEstablished = false;
         this.connectionLabel = 'Connected';

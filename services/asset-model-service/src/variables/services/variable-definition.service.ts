@@ -10,6 +10,7 @@ import { CreateVariableDefinitionDto } from '../dto/create-variable-definition.d
 import { UpdateVariableDefinitionDto } from '../dto/update-variable-definition.dto';
 import { AssetTypeVariable } from '../../asset-types/entities/asset-type-variable.entity';
 import { AssetVariable } from '../../assets/entities/asset-variable.entity';
+import { MetadataChangeDetectorService } from '../../metadata/metadata-change-detector.service';
 
 @Injectable()
 export class VariableDefinitionService {
@@ -22,6 +23,7 @@ export class VariableDefinitionService {
 
     @InjectRepository(AssetVariable)
     private readonly assetVariableRepository: Repository<AssetVariable>,
+    private readonly metadataChanges: MetadataChangeDetectorService,
   ) {}
 
   async create(dto: CreateVariableDefinitionDto): Promise<VariableDefinition> {
@@ -39,7 +41,10 @@ export class VariableDefinitionService {
     }
     const variableDefinition = this.variableDefinitionRepository.create(dto);
 
-    return this.variableDefinitionRepository.save(variableDefinition);
+    const saved =
+      await this.variableDefinitionRepository.save(variableDefinition);
+    this.metadataChanges.markChanged();
+    return saved;
   }
 
   getAll(): Promise<VariableDefinition[]> {
@@ -79,8 +84,15 @@ export class VariableDefinitionService {
       }
     }
 
+    const changed = Object.entries(dto).some(
+      ([key, value]) => variableDefinition[key] !== value,
+    );
+    if (!changed) return variableDefinition;
     Object.assign(variableDefinition, dto);
-    return this.variableDefinitionRepository.save(variableDefinition);
+    const saved =
+      await this.variableDefinitionRepository.save(variableDefinition);
+    this.metadataChanges.markChanged();
+    return saved;
   }
 
   async remove(id: string): Promise<{ message: string }> {
@@ -101,6 +113,7 @@ export class VariableDefinitionService {
     }
 
     await this.variableDefinitionRepository.remove(variableDefinition);
+    this.metadataChanges.markChanged();
     return {
       message: `Variable definition '${variableDefinition.name}' deleted`,
     };

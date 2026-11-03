@@ -7,8 +7,8 @@ import { AssetVariable } from '../entities/asset-variable.entity';
 const repository = () => ({
   findOne: jest.fn(),
   find: jest.fn(),
-  create: jest.fn((value) => value),
-  save: jest.fn((value) => Promise.resolve(value)),
+  create: jest.fn((value: unknown) => value),
+  save: jest.fn((value: unknown) => Promise.resolve(value)),
   count: jest.fn(),
   remove: jest.fn(),
 });
@@ -19,6 +19,7 @@ describe('AssetService', () => {
   let assetVariableRepository: ReturnType<typeof repository>;
   let variableDefinitionRepository: ReturnType<typeof repository>;
   let assetTypeVariableRepository: ReturnType<typeof repository>;
+  let markChanged: jest.Mock;
   let service: AssetService;
 
   beforeEach(() => {
@@ -27,12 +28,14 @@ describe('AssetService', () => {
     assetVariableRepository = repository();
     variableDefinitionRepository = repository();
     assetTypeVariableRepository = repository();
+    markChanged = jest.fn();
     service = new AssetService(
       assetRepository as never,
       assetTypeRepository as never,
       assetVariableRepository as never,
       variableDefinitionRepository as never,
       assetTypeVariableRepository as never,
+      { markChanged } as never,
     );
   });
 
@@ -47,6 +50,7 @@ describe('AssetService', () => {
       assetTypeId: 'type-id',
       parentAssetId: 'parent-id',
     });
+    expect(markChanged).toHaveBeenCalledTimes(1);
 
     expect(assetRepository.create).toHaveBeenCalledWith(
       expect.objectContaining({ assetType, parentAsset }),

@@ -7,8 +7,8 @@ import { VariableDefinition } from '../entities/variable-definition.entity';
 const repository = () => ({
   findOne: jest.fn(),
   find: jest.fn(),
-  create: jest.fn((value) => value),
-  save: jest.fn((value) => Promise.resolve(value)),
+  create: jest.fn((value: unknown) => value),
+  save: jest.fn((value: unknown) => Promise.resolve(value)),
   count: jest.fn(),
   remove: jest.fn(),
 });
@@ -17,16 +17,19 @@ describe('VariableDefinitionService', () => {
   let variableRepository: ReturnType<typeof repository>;
   let assetTypeVariableRepository: ReturnType<typeof repository>;
   let assetVariableRepository: ReturnType<typeof repository>;
+  let markChanged: jest.Mock;
   let service: VariableDefinitionService;
 
   beforeEach(() => {
     variableRepository = repository();
     assetTypeVariableRepository = repository();
     assetVariableRepository = repository();
+    markChanged = jest.fn();
     service = new VariableDefinitionService(
       variableRepository as never,
       assetTypeVariableRepository as never,
       assetVariableRepository as never,
+      { markChanged } as never,
     );
   });
 
@@ -64,6 +67,7 @@ describe('VariableDefinitionService', () => {
     await expect(
       service.update('variable-id', { description: 'Motor temperature' }),
     ).resolves.toMatchObject({ description: 'Motor temperature' });
+    expect(markChanged).toHaveBeenCalledTimes(1);
     await expect(service.getById('variable-id')).resolves.toBe(variable);
   });
 

@@ -8,6 +8,7 @@ import { AssetController } from './controllers/asset.controller';
 import { VariableDefinition } from '../variables/entities/variable-definition.entity';
 import { AssetTypeVariable } from '../asset-types/entities/asset-type-variable.entity';
 import { AssetGrpcController } from './controllers/asset-grpc.controller';
+import { MetadataModule } from '../metadata/metadata.module';
 
 @Module({
   imports: [
@@ -18,11 +19,9 @@ import { AssetGrpcController } from './controllers/asset-grpc.controller';
       VariableDefinition,
       AssetTypeVariable,
     ]),
+    MetadataModule,
   ],
   providers: [AssetService],
-  controllers: [
-    AssetController,
-    AssetGrpcController
-  ],
+  controllers: [AssetController, AssetGrpcController],
 })
 export class AssetsModule {}

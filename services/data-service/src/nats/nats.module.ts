@@ -6,8 +6,10 @@ import {
   MeasurementConsumer,
 } from './measurement.consumer';
 import { NatsService } from './nats.service';
+import { AssetModelSyncModule } from '../asset-model/asset-model-sync.module';
 
 @Module({
+  imports: [AssetModelSyncModule],
   providers: [
     {
       provide: DATA_SERVICE_VARIABLE_REPOSITORY,

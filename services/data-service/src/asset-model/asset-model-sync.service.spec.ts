@@ -1,12 +1,28 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { AssetModelSyncService } from './asset-model-sync.service';
-import { AssetModelGrpcService, AssetNode } from '../grpc/asset-model-grpc.service';
+
+const uiNode = (
+  id: string,
+  name: string,
+  variables: unknown[] = [],
+  children: unknown[] = [],
+) => ({
+  key: id,
+  label: name,
+  data: { id, name, variables },
+  children,
+});
 
 describe('AssetModelSyncService', () => {
   const upsert = jest.fn<(...args: unknown[]) => Promise<unknown>>();
   const execute = jest.fn<() => Promise<unknown>>();
   const where = jest.fn<(...args: unknown[]) => unknown>().mockReturnThis();
-  const queryBuilder = { delete: jest.fn().mockReturnThis(), from: jest.fn().mockReturnThis(), where, execute };
+  const queryBuilder = {
+    delete: jest.fn().mockReturnThis(),
+    from: jest.fn().mockReturnThis(),
+    where,
+    execute,
+  };
   const repository = {
     upsert,
     createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
@@ -18,43 +34,45 @@ describe('AssetModelSyncService', () => {
     getRepository: jest.fn().mockReturnValue(repository),
   };
   const dataSource = {
-    transaction: jest.fn(async (callback: (manager: MockManager) => Promise<void>) => callback(manager)),
+    transaction: jest.fn(
+      async (callback: (manager: MockManager) => Promise<void>) =>
+        callback(manager),
+    ),
   };
-  const getAssetHierarchy = jest.fn<() => Promise<AssetNode[]>>();
-  const grpc = { getAssetHierarchy } as unknown as AssetModelGrpcService;
-  const service = new AssetModelSyncService(grpc, dataSource as never);
+  const service = new AssetModelSyncService(dataSource as never);
 
   beforeEach(() => {
     jest.clearAllMocks();
     execute.mockResolvedValue({});
     upsert.mockResolvedValue({});
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve([]),
+    }) as never;
   });
 
   it('recursively upserts nested asset variables and removes stale rows', async () => {
-    const hierarchy: AssetNode[] = [
-      {
-        id: 'asset-root',
-        name: 'Root',
-        variables: [],
-        children: [
-          {
-            id: 'asset-child',
-            name: 'Child',
-            variables: [
-              {
-                id: 'variable-1',
-                assetVariableId: 'asset-variable-1',
-                name: 'Temperature',
-                dataType: 'FLOAT',
-                unit: 'C',
-              },
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve([
+          uiNode(
+            'asset-root',
+            'Root',
+            [],
+            [
+              uiNode('asset-child', 'Child', [
+                {
+                  assetVariableId: 'asset-variable-1',
+                  name: 'Temperature',
+                  dataType: 'FLOAT',
+                  unit: 'C',
+                },
+              ]),
             ],
-            children: [],
-          },
-        ],
-      },
-    ];
-    getAssetHierarchy.mockResolvedValue(hierarchy);
+          ),
+        ]),
+    });
 
     await service.synchronize();
 
@@ -78,7 +96,10 @@ describe('AssetModelSyncService', () => {
   });
 
   it('removes every cached row when the latest hierarchy has no variables', async () => {
-    getAssetHierarchy.mockResolvedValue([]);
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve([]),
+    });
 
     await service.synchronize();
 
@@ -88,25 +109,34 @@ describe('AssetModelSyncService', () => {
   });
 
   it('upserts each canonical AssetVariable ID only once', async () => {
-    getAssetHierarchy.mockResolvedValue([
-      {
-        id: 'asset-root',
-        name: 'Root',
-        variables: [
-          { id: 'variable-1', assetVariableId: 'asset-variable-1', name: 'Temperature', dataType: 'FLOAT', unit: 'C' },
-        ],
-        children: [
-          {
-            id: 'asset-child',
-            name: 'Child',
-            variables: [
-              { id: 'variable-1', assetVariableId: 'asset-variable-2', name: 'Temperature', dataType: 'FLOAT', unit: 'C' },
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve([
+          uiNode(
+            'asset-root',
+            'Root',
+            [
+              {
+                assetVariableId: 'asset-variable-1',
+                name: 'Temperature',
+                dataType: 'FLOAT',
+                unit: 'C',
+              },
             ],
-            children: [],
-          },
-        ],
-      },
-    ]);
+            [
+              uiNode('asset-child', 'Child', [
+                {
+                  assetVariableId: 'asset-variable-2',
+                  name: 'Temperature',
+                  dataType: 'FLOAT',
+                  unit: 'C',
+                },
+              ]),
+            ],
+          ),
+        ]),
+    });
 
     await service.synchronize();
 
@@ -125,5 +155,67 @@ describe('AssetModelSyncService', () => {
     await service.onApplicationBootstrap();
 
     expect(synchronize).toHaveBeenCalledTimes(1);
+    synchronize.mockRestore();
+    await service.onApplicationShutdown();
+  });
+
+  it('uses the configured hierarchy endpoint', async () => {
+    process.env.ASSET_MODEL_URL = 'http://asset-model:3000';
+    await service.synchronize();
+    expect(global.fetch).toHaveBeenCalledWith(
+      'http://asset-model:3000/assets/hierarchy',
+      expect.objectContaining({ signal: expect.anything() }),
+    );
+    delete process.env.ASSET_MODEL_URL;
+  });
+
+  it('preserves the active cache when hierarchy retrieval fails', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 503 });
+    await expect(service.synchronize()).rejects.toThrow('HTTP 503');
+    expect(dataSource.transaction).not.toHaveBeenCalled();
+  });
+
+  it('refreshes on a valid notification and ignores malformed payloads', async () => {
+    const valid = JSON.stringify({
+      eventId: 'event-1',
+      eventType: 'ASSET_METADATA_UPDATE',
+      source: 'asset-model-service',
+      timestamp: new Date().toISOString(),
+    });
+    expect(service.processNotification('{')).toBe(false);
+    expect(service.processNotification(valid)).toBe(true);
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(global.fetch).toHaveBeenCalled();
+  });
+
+  it('coalesces notifications received during a hierarchy fetch', async () => {
+    let releaseFirst!: (value: unknown) => void;
+    const firstResponse = new Promise((resolve) => {
+      releaseFirst = resolve;
+    });
+    (global.fetch as jest.Mock)
+      .mockReturnValueOnce(firstResponse)
+      .mockResolvedValue({ ok: true, json: () => Promise.resolve([]) });
+
+    const first = service.synchronize();
+    const second = service.synchronize();
+    releaseFirst({ ok: true, json: () => Promise.resolve([]) });
+    await Promise.all([first, second]);
+
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('runs periodic reconciliation and cancels it on shutdown', async () => {
+    jest.useFakeTimers();
+    process.env.ASSET_METADATA_RECONCILIATION_MS = '1000';
+    await service.onApplicationBootstrap();
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    await jest.advanceTimersByTimeAsync(1000);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    await service.onApplicationShutdown();
+    await jest.advanceTimersByTimeAsync(5000);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    delete process.env.ASSET_METADATA_RECONCILIATION_MS;
+    jest.useRealTimers();
   });
 });
