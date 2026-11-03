@@ -1,0 +1,93 @@
+{
+  "info": {
+    "_postman_id": "48b79feb-8704-4a2b-8a11-f494eaeec0bb",
+    "name": "KPI Service API",
+    "description": "Requests for the KPI Service HTTP API and live OEE WebSocket. Select the matching KPI Service environment before sending requests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Check service health",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Returns { \"status\": \"ok\" } when the service is running."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "OEE",
+      "item": [
+        {
+          "name": "Calculate OEE for an asset",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/oee/{{assetId}}?start={{start}}&end={{end}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "oee", "{{assetId}}"],
+              "query": [
+                { "key": "start", "value": "{{start}}", "description": "Inclusive reporting window start; include a timezone." },
+                { "key": "end", "value": "{{end}}", "description": "Exclusive reporting window end; include a timezone." }
+              ]
+            },
+            "description": "Calculates OEE from configured Data Service telemetry for the selected asset and time window."
+          },
+          "response": []
+        },
+        {
+          "name": "Get OEE history",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/oee/{{assetId}}/history?start={{start}}&end={{end}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "oee", "{{assetId}}", "history"],
+              "query": [
+                { "key": "start", "value": "{{start}}", "description": "Inclusive ISO 8601 start timestamp; include a timezone." },
+                { "key": "end", "value": "{{end}}", "description": "Inclusive ISO 8601 end timestamp; include a timezone." }
+              ]
+            },
+            "description": "Returns persisted OEE readings in the inclusive time window."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Live OEE WebSocket",
+      "item": [
+        {
+          "name": "Connect to live OEE stream",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{wsBaseUrl}}/api/v1/oee/{{assetId}}/live"
+            },
+            "description": "Open this request as a WebSocket connection. The service streams rolling OEE readings while connected."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

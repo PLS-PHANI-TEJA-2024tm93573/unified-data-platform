@@ -19,6 +19,7 @@ import { UpdateAssetDto } from '../dto/update-asset.dto';
 
 export type AssetHierarchyVariable = {
   id: string;
+  assetVariableId: string;
   name: string;
   dataType: string;
   unit: string;
@@ -384,6 +385,7 @@ export class AssetService {
 
       node.variables.push({
         id: assetVariable.variableDefinition.id,
+        assetVariableId: assetVariable.id,
         name: assetVariable.variableDefinition.name,
         dataType: assetVariable.variableDefinition.dataType,
         unit: assetVariable.variableDefinition.unit,

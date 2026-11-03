@@ -1,0 +1,249 @@
+openapi: 3.0.3
+info:
+  title: KPI Service API
+  version: 1.0.0
+  description: |
+    API for OEE calculations and persisted OEE readings. The service reads
+    measurement history from Data Service and resolves asset measurement
+    mappings from Asset Model. No authentication is configured.
+
+    The live endpoint is a WebSocket at `/api/v1/oee/{asset_id}/live`. Its
+    handshake and message format are documented with the `x-websocket` path
+    extension because OpenAPI 3.0 describes HTTP operations only.
+  contact:
+    name: KPI Service
+servers:
+  - url: http://localhost:8000
+    description: Local development server (override for your deployment)
+tags:
+  - name: Health
+    description: Service availability
+  - name: OEE
+    description: OEE calculations and readings
+paths:
+  /health:
+    get:
+      tags: [Health]
+      operationId: getHealth
+      summary: Check service health
+      responses:
+        "200":
+          description: Service is running
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /api/v1/oee/{asset_id}:
+    get:
+      tags: [OEE]
+      operationId: calculateAssetOee
+      summary: Calculate OEE for a reporting window
+      description: |
+        Calculates a reading using configured asset mappings and telemetry
+        history. The start and end timestamps must include timezone offsets,
+        and end must be later than start. OEE factors are percentages. A factor
+        can be null when its input data or denominator is unavailable.
+      parameters:
+        - $ref: "#/components/parameters/AssetId"
+        - name: start
+          in: query
+          required: true
+          description: Inclusive reporting window start (timezone required)
+          schema:
+            type: string
+            format: date-time
+          example: "2026-11-03T00:00:00Z"
+        - name: end
+          in: query
+          required: true
+          description: Exclusive reporting window end (timezone required)
+          schema:
+            type: string
+            format: date-time
+          example: "2026-11-03T01:00:00Z"
+      responses:
+        "200":
+          description: Calculated OEE reading
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OeeReading"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          description: No KPI variable configuration exists for this asset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpError"
+        "422":
+          description: OEE is not enabled or the requested data is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpError"
+        "502":
+          description: Unable to retrieve telemetry from Data Service
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpError"
+
+  /api/v1/oee/{asset_id}/history:
+    get:
+      tags: [OEE]
+      operationId: getOeeHistory
+      summary: Get historical OEE telemetry
+      description: Returns persisted readings in the inclusive time window.
+      parameters:
+        - $ref: "#/components/parameters/AssetId"
+        - name: start
+          in: query
+          required: true
+          description: Inclusive ISO 8601 start timestamp (timezone required)
+          schema:
+            type: string
+            format: date-time
+          example: "2026-11-03T00:00:00Z"
+        - name: end
+          in: query
+          required: true
+          description: Inclusive ISO 8601 end timestamp (timezone required)
+          schema:
+            type: string
+            format: date-time
+          example: "2026-11-03T01:00:00Z"
+      responses:
+        "200":
+          description: Historical readings (empty when no readings match)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OeeReading"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/oee/{asset_id}/live:
+    get:
+      tags: [OEE]
+      operationId: streamLiveAssetOee
+      summary: Open the live OEE WebSocket
+      description: |
+        Upgrade this GET request to a WebSocket connection at
+        `ws://localhost:8000/api/v1/oee/{asset_id}/live`. Keep the connection
+        open to receive rolling polling-window OEE readings. Client text frames
+        keep the connection active and are not interpreted by the service.
+      x-websocket:
+        url: ws://localhost:8000/api/v1/oee/{asset_id}/live
+        messages:
+          direction: server-to-client
+          contentType: application/json
+          schema:
+            $ref: "#/components/schemas/OeeReading"
+      parameters:
+        - $ref: "#/components/parameters/AssetId"
+      responses:
+        "101":
+          description: WebSocket protocol switch successful
+
+components:
+  parameters:
+    AssetId:
+      name: asset_id
+      in: path
+      required: true
+      description: Asset identifier as configured by Asset Model
+      schema:
+        type: string
+      example: "<asset-uuid>"
+  schemas:
+    OeeReading:
+      type: object
+      required:
+        - asset_id
+        - timestamp
+        - availability_percent
+        - performance_percent
+        - quality_percent
+        - oee_percent
+      properties:
+        asset_id:
+          type: string
+          description: Asset identifier
+          example: "<asset-uuid>"
+        timestamp:
+          type: string
+          format: date-time
+          description: Time the reading was calculated
+          example: "2026-11-03T12:00:00Z"
+        availability_percent:
+          type: number
+          format: float
+          nullable: true
+          example: 95.0
+        performance_percent:
+          type: number
+          format: float
+          nullable: true
+          example: 92.0
+        quality_percent:
+          type: number
+          format: float
+          nullable: true
+          example: 98.0
+        oee_percent:
+          type: number
+          format: float
+          nullable: true
+          example: 85.652
+        planned_production_seconds:
+          type: number
+          format: float
+          nullable: true
+          example: 27000.0
+        operating_seconds:
+          type: number
+          format: float
+          nullable: true
+          example: 25650.0
+        total_output:
+          type: number
+          format: float
+          nullable: true
+          example: 690
+        good_output:
+          type: number
+          format: float
+          nullable: true
+          example: 676
+        rejected_output:
+          type: number
+          format: float
+          nullable: true
+          example: 14
+    HttpError:
+      type: object
+      required: [detail]
+      properties:
+        detail:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: object
+          example: start must not be later than end
+  responses:
+    BadRequest:
+      description: Invalid time window or missing timezone information
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/HttpError"

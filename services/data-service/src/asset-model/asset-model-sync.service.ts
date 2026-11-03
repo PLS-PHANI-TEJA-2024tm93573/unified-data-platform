@@ -51,8 +51,8 @@ export class AssetModelSyncService implements OnApplicationBootstrap {
 
     const visit = (asset: AssetNode): void => {
       for (const variable of asset.variables ?? []) {
-        rowsByAssetVariableId.set(variable.id, {
-          assetVariableId: variable.id,
+        rowsByAssetVariableId.set(variable.assetVariableId, {
+          assetVariableId: variable.assetVariableId,
           assetId: asset.id,
           name: variable.name,
           dataType: variable.dataType,
