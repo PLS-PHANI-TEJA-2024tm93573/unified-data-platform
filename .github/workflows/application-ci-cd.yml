@@ -1,0 +1,277 @@
+name: Application CI/CD
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - services/asset-model-service/**
+      - services/data-service/**
+      - services/kpi-service/**
+      - production_simulator/**
+  pull_request:
+    paths:
+      - services/asset-model-service/**
+      - services/data-service/**
+      - services/kpi-service/**
+      - production_simulator/**
+  workflow_dispatch:
+    inputs:
+      application:
+        description: Application to build (or all four)
+        required: true
+        type: choice
+        options:
+          - all
+          - asset-service
+          - data-service
+          - kpi-service
+          - simulator
+        default: all
+
+permissions:
+  contents: read
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      asset: ${{ steps.changes.outputs.asset }}
+      data: ${{ steps.changes.outputs.data }}
+      kpi: ${{ steps.changes.outputs.kpi }}
+      simulator: ${{ steps.changes.outputs.simulator }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: changes
+        name: Detect changed applications
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.sha }}
+          MANUAL_APPLICATION: ${{ inputs.application }}
+        run: |
+          set -euo pipefail
+          asset=false
+          data=false
+          kpi=false
+          simulator=false
+
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            case "$MANUAL_APPLICATION" in
+              all) asset=true; data=true; kpi=true; simulator=true ;;
+              asset-service) asset=true ;;
+              data-service) data=true ;;
+              kpi-service) kpi=true ;;
+              simulator) simulator=true ;;
+              *) echo "Unsupported application: $MANUAL_APPLICATION" >&2; exit 1 ;;
+            esac
+          else
+            if [[ "$EVENT_NAME" == "pull_request" ]]; then
+              changed_files="$(git diff --name-only "$BASE_SHA...$HEAD_SHA")"
+            elif [[ "$BEFORE_SHA" =~ ^0+$ ]]; then
+              changed_files="$(git diff-tree --no-commit-id --name-only -r "$HEAD_SHA")"
+            else
+              changed_files="$(git diff --name-only "$BEFORE_SHA" "$HEAD_SHA")"
+            fi
+
+            while IFS= read -r file; do
+              case "$file" in
+                services/asset-model-service/*) asset=true ;;
+                services/data-service/*) data=true ;;
+                services/kpi-service/*) kpi=true ;;
+                production_simulator/*) simulator=true ;;
+              esac
+            done <<< "$changed_files"
+          fi
+
+          {
+            echo "asset=$asset"
+            echo "data=$data"
+            echo "kpi=$kpi"
+            echo "simulator=$simulator"
+          } >> "$GITHUB_OUTPUT"
+
+  asset_service:
+    needs: detect
+    if: needs.detect.outputs.asset == 'true'
+    uses: ./.github/workflows/reusable-application-ci-cd.yml
+    with:
+      application: asset-service
+      source-path: services/asset-model-service
+      publish: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+    secrets: inherit
+
+  data_service:
+    needs: detect
+    if: needs.detect.outputs.data == 'true'
+    uses: ./.github/workflows/reusable-application-ci-cd.yml
+    with:
+      application: data-service
+      source-path: services/data-service
+      publish: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+    secrets: inherit
+
+  kpi_service:
+    needs: detect
+    if: needs.detect.outputs.kpi == 'true'
+    uses: ./.github/workflows/reusable-application-ci-cd.yml
+    with:
+      application: kpi-service
+      source-path: services/kpi-service
+      publish: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+    secrets: inherit
+
+  simulator:
+    needs: detect
+    if: needs.detect.outputs.simulator == 'true'
+    uses: ./.github/workflows/reusable-application-ci-cd.yml
+    with:
+      application: simulator
+      source-path: production_simulator
+      publish: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+    secrets: inherit
+
+  update-manifests:
+    needs:
+      - detect
+      - asset_service
+      - data_service
+      - kpi_service
+      - simulator
+    if: >-
+      always() && github.event_name != 'pull_request' &&
+      github.ref == 'refs/heads/main' &&
+      ((needs.detect.outputs.asset == 'true' && needs.asset_service.result == 'success') ||
+       (needs.detect.outputs.data == 'true' && needs.data_service.result == 'success') ||
+       (needs.detect.outputs.kpi == 'true' && needs.kpi_service.result == 'success') ||
+       (needs.detect.outputs.simulator == 'true' && needs.simulator.result == 'success'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Configure Git author
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Update only the published application image references
+        shell: bash
+        env:
+          ASSET_CHANGED: ${{ needs.detect.outputs.asset }}
+          DATA_CHANGED: ${{ needs.detect.outputs.data }}
+          KPI_CHANGED: ${{ needs.detect.outputs.kpi }}
+          SIMULATOR_CHANGED: ${{ needs.detect.outputs.simulator }}
+          ASSET_SUCCEEDED: ${{ needs.asset_service.result == 'success' }}
+          DATA_SUCCEEDED: ${{ needs.data_service.result == 'success' }}
+          KPI_SUCCEEDED: ${{ needs.kpi_service.result == 'success' }}
+          SIMULATOR_SUCCEEDED: ${{ needs.simulator.result == 'success' }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          services=()
+          deployment_paths=()
+          if [[ "$ASSET_CHANGED" == true && "$ASSET_SUCCEEDED" == true ]]; then
+            services+=(asset-service)
+            deployment_paths+=(clusters/k3s/applications/asset-service/deployment.yaml)
+          fi
+          if [[ "$DATA_CHANGED" == true && "$DATA_SUCCEEDED" == true ]]; then
+            services+=(data-service)
+            deployment_paths+=(clusters/k3s/applications/data-service/deployment.yaml)
+          fi
+          if [[ "$KPI_CHANGED" == true && "$KPI_SUCCEEDED" == true ]]; then
+            services+=(kpi-service)
+            deployment_paths+=(clusters/k3s/applications/kpi-service/deployment.yaml)
+          fi
+          if [[ "$SIMULATOR_CHANGED" == true && "$SIMULATOR_SUCCEEDED" == true ]]; then
+            services+=(simulator)
+            deployment_paths+=(clusters/k3s/applications/simulator/deployment.yaml)
+          fi
+
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --hard origin/main
+
+            SERVICES="${services[*]}" python - <<'PY'
+          import os
+          import re
+          import subprocess
+          from pathlib import Path
+
+          username = os.environ["DOCKERHUB_USERNAME"]
+          image_tag = os.environ["IMAGE_TAG"]
+          services = os.environ["SERVICES"].split()
+          paths = {
+              "asset-service": "clusters/k3s/applications/asset-service/deployment.yaml",
+              "data-service": "clusters/k3s/applications/data-service/deployment.yaml",
+              "kpi-service": "clusters/k3s/applications/kpi-service/deployment.yaml",
+              "simulator": "clusters/k3s/applications/simulator/deployment.yaml",
+          }
+
+          for service in services:
+              path = Path(paths[service])
+              lines = path.read_text().splitlines(keepends=True)
+              container = re.compile(r"^(\s*)- name: " + re.escape(service) + r"\s*$")
+              start = [index for index, line in enumerate(lines) if container.match(line.rstrip("\n"))]
+              if len(start) != 1:
+                  raise SystemExit(f"Expected one {service} container in {path}; found {len(start)}")
+
+              image_index = None
+              base_indent = len(container.match(lines[start[0]].rstrip("\n")).group(1))
+              for index in range(start[0] + 1, len(lines)):
+                  line = lines[index]
+                  stripped = line.lstrip()
+                  indent = len(line) - len(stripped)
+                  if stripped.startswith("- name:") and indent <= base_indent:
+                      break
+                  if re.match(r"^\s+image:\s*", line):
+                      image_index = index
+                      break
+              if image_index is None:
+                  raise SystemExit(f"No image field found for {service} in {path}")
+
+              old_image = re.search(r"image:\s*(\S+)", lines[image_index]).group(1)
+              old_tag = old_image.rsplit(":", 1)[-1]
+              if re.fullmatch(r"[0-9a-f]{40}", old_tag):
+                  current_exists = subprocess.run(
+                    ["git", "cat-file", "-e", f"{old_tag}^{{commit}}"],
+                      stdout=subprocess.DEVNULL,
+                      stderr=subprocess.DEVNULL,
+                  ).returncode == 0
+                  if current_exists and subprocess.run(
+                      ["git", "merge-base", "--is-ancestor", image_tag, old_tag],
+                      stdout=subprocess.DEVNULL,
+                      stderr=subprocess.DEVNULL,
+                  ).returncode == 0:
+                      print(f"Keeping newer {service} deployment {old_tag}")
+                      continue
+
+              indent = re.match(r"^\s*", lines[image_index]).group(0)
+              lines[image_index] = f"{indent}image: docker.io/{username}/{service}:{image_tag}\n"
+              path.write_text("".join(lines))
+          PY
+
+            git add -- "${deployment_paths[@]}"
+
+            if git diff --cached --quiet; then
+              echo "No deployment image changes are needed."
+              exit 0
+            fi
+
+            git commit -m "chore(gitops): update application image tags to ${IMAGE_TAG}"
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            sleep "$((attempt * 2))"
+          done
+
+          echo "Could not push image updates after five attempts." >&2
+          exit 1

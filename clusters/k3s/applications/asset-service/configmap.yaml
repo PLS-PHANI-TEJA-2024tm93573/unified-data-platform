@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: asset-service-config
+  namespace: industrial-iot
+data:
+  PORT: "3000"
+  DATABASE_HOST: postgres.industrial-iot.svc.cluster.local
+  DATABASE_PORT: "5432"
+  NATS_URL: nats://nats.industrial-iot.svc.cluster.local:4222
+  ASSET_METADATA_DEBOUNCE_MS: "3000"

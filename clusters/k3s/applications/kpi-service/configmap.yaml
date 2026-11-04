@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kpi-service-config
+  namespace: industrial-iot
+data:
+  ASSET_MODEL_URL: http://asset-service.industrial-iot.svc.cluster.local:3000
+  DATA_SERVICE_URL: http://data-service.industrial-iot.svc.cluster.local:3001
+  COUNTER_BASELINE_DAYS: "1"
+  POLL_INTERVAL_SECONDS: "7"
+  CORS_ORIGINS: ""

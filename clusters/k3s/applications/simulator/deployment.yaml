@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simulator
+  namespace: industrial-iot
+  labels:
+    app.kubernetes.io/name: simulator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: simulator
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: simulator
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: simulator
+          image: docker.io/your-dockerhub-username/simulator:0.1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8090
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "8090"
+            - name: NATS_URL
+              value: nats://nats.industrial-iot.svc.cluster.local:4222
+            - name: METADATA_MODE
+              value: asset-model
+            - name: ASSET_MODEL_URL
+              value: http://asset-service.industrial-iot.svc.cluster.local:3000
+            - name: AUTO_START
+              value: "true"
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 5
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
