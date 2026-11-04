@@ -34,7 +34,7 @@ export class AssetModelGrpcService implements OnModuleInit {
 
   constructor(
     @Inject('ASSET_MODEL_SERVICE')
-    private readonly grpcClient: ClientGrpc
+    private readonly grpcClient: ClientGrpc,
   ) {}
 
   onModuleInit() {

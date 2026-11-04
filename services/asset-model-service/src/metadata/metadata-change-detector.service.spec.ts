@@ -3,7 +3,9 @@ import { MetadataChangeDetectorService } from './metadata-change-detector.servic
 
 jest.mock('nats', () => ({
   connect: jest.fn(),
-  StringCodec: () => ({ encode: (value: string) => new TextEncoder().encode(value) }),
+  StringCodec: () => ({
+    encode: (value: string) => new TextEncoder().encode(value),
+  }),
 }));
 
 describe('MetadataChangeDetectorService', () => {
@@ -42,11 +44,17 @@ describe('MetadataChangeDetectorService', () => {
       'asset.metadata.update',
       expect.any(Uint8Array),
     );
-    const payload = JSON.parse(new TextDecoder().decode(connection.publish.mock.calls[0][1]));
-    expect(payload).toEqual(expect.objectContaining({
-      eventType: 'ASSET_METADATA_UPDATE', source: 'asset-model-service',
-      timestamp: expect.any(String), eventId: expect.any(String),
-    }));
+    const payload = JSON.parse(
+      new TextDecoder().decode(connection.publish.mock.calls[0][1]),
+    );
+    expect(payload).toEqual(
+      expect.objectContaining({
+        eventType: 'ASSET_METADATA_UPDATE',
+        source: 'asset-model-service',
+        timestamp: expect.any(String),
+        eventId: expect.any(String),
+      }),
+    );
   });
 
   it('resets the timer for nearby mutations and publishes once', async () => {

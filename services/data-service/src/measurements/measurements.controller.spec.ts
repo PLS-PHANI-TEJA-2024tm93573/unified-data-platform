@@ -25,7 +25,9 @@ describe('MeasurementsController', () => {
     }).compile();
 
     app = module.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({ transform: true, whitelist: true }),
+    );
     await app.init();
     jest.clearAllMocks();
   });
@@ -35,9 +37,15 @@ describe('MeasurementsController', () => {
   });
 
   it('accepts a valid range query and delegates it to the service', async () => {
-    service.findInRange.mockResolvedValue({ asset_variable_id: assetVariableId, data: [] });
+    service.findInRange.mockResolvedValue({
+      asset_variable_id: assetVariableId,
+      data: [],
+    });
 
-    await request(app.getHttpServer()).get('/measurements').query(validQuery).expect(200);
+    await request(app.getHttpServer())
+      .get('/measurements')
+      .query(validQuery)
+      .expect(200);
 
     expect(service.findInRange).toHaveBeenCalledWith(
       expect.objectContaining(validQuery),
@@ -51,12 +59,17 @@ describe('MeasurementsController', () => {
     ['limit', { ...validQuery, limit: '0' }],
     ['maximum limit', { ...validQuery, limit: '10001' }],
   ])('rejects invalid %s with HTTP 400', async (_field, query) => {
-    await request(app.getHttpServer()).get('/measurements').query(query).expect(400);
+    await request(app.getHttpServer())
+      .get('/measurements')
+      .query(query)
+      .expect(400);
     expect(service.findInRange).not.toHaveBeenCalled();
   });
 
   it('rejects an invalid latest AssetVariable UUID with HTTP 400', async () => {
-    await request(app.getHttpServer()).get('/measurements/invalid/latest').expect(400);
+    await request(app.getHttpServer())
+      .get('/measurements/invalid/latest')
+      .expect(400);
     expect(service.findLatest).not.toHaveBeenCalled();
   });
 });

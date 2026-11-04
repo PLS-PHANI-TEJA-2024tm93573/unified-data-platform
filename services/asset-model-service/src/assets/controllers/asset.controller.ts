@@ -49,13 +49,10 @@ export class AssetController {
   }
 
   @Get(':assetId/children')
-  getChildAssets(
-    @Param('assetId', ParseUUIDPipe) assetId: string,
-  ){
+  getChildAssets(@Param('assetId', ParseUUIDPipe) assetId: string) {
     console.log(assetId);
-    return this.assetService.getChildAssets(assetId)
+    return this.assetService.getChildAssets(assetId);
   }
-
 
   @Patch(':id')
   update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateAssetDto) {

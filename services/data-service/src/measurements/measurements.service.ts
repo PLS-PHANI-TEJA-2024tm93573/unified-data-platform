@@ -1,4 +1,9 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { DataServiceVariable } from '../database/entities/data-service-variable.entity';
 import { Measurement } from '../database/entities/measurement.entity';
@@ -53,7 +58,7 @@ export class MeasurementsService {
     }
 
     const measurements = await builder.getMany();
-    const result =  {
+    const result = {
       asset_variable_id: query.asset_variable_id,
       data_type: metadata.dataType,
       unit: metadata.unit,
@@ -66,13 +71,17 @@ export class MeasurementsService {
     const metadata = await this.getMetadata(assetVariableId);
     const measurement = await this.measurementRepository
       .createQueryBuilder('measurement')
-      .where('measurement.variable_id = :variableId', { variableId: assetVariableId })
+      .where('measurement.variable_id = :variableId', {
+        variableId: assetVariableId,
+      })
       .orderBy('measurement.timestamp', 'DESC')
       .limit(1)
       .getOne();
 
     if (!measurement) {
-      throw new NotFoundException(`No measurement found for ${assetVariableId}`);
+      throw new NotFoundException(
+        `No measurement found for ${assetVariableId}`,
+      );
     }
 
     return {
@@ -83,8 +92,12 @@ export class MeasurementsService {
     };
   }
 
-  private async getMetadata(assetVariableId: string): Promise<DataServiceVariable> {
-    const metadata = await this.variableRepository.findOneBy({ assetVariableId });
+  private async getMetadata(
+    assetVariableId: string,
+  ): Promise<DataServiceVariable> {
+    const metadata = await this.variableRepository.findOneBy({
+      assetVariableId,
+    });
     if (!metadata) {
       throw new NotFoundException(`Unknown AssetVariable ${assetVariableId}`);
     }

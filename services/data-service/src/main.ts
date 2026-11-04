@@ -15,7 +15,9 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('Data Service API')
-    .setDescription('API documentation for the unified data platform Data Service')
+    .setDescription(
+      'API documentation for the unified data platform Data Service',
+    )
     .setVersion('1.0')
     .build();
 

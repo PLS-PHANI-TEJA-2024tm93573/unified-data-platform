@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateDataServiceVariables1788600158360
-  implements MigrationInterface
-{
+export class CreateDataServiceVariables1788600158360 implements MigrationInterface {
   name = 'CreateDataServiceVariables1788600158360';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -20,8 +18,6 @@ export class CreateDataServiceVariables1788600158360
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      'DROP TABLE IF EXISTS "data_service_variables"',
-    );
+    await queryRunner.query('DROP TABLE IF EXISTS "data_service_variables"');
   }
 }
