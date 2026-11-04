@@ -18,7 +18,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
         - name: kpi-service
-          image: docker.io/your-dockerhub-username/kpi-service:0.1.0
+          image: docker.io/plsphaniteja2024tm93573/kpi-service:00fdcc530fb7731f85cb8142465de65a04f34571
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
