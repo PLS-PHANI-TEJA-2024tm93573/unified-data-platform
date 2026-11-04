@@ -18,7 +18,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
         - name: asset-service
-          image: docker.io/your-dockerhub-username/asset-service:0.1.0
+          image: docker.io/plsphaniteja2024tm93573/asset-service:9222dc21cb8fab9c5be30fdef077d2dc4f231c7a
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
