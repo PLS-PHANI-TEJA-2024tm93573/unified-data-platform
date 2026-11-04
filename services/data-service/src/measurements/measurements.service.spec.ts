@@ -61,9 +61,20 @@ describe('MeasurementsService', () => {
       'measurement.variable_id = :variableId',
       { variableId: assetVariableId },
     );
-    expect(builder.andWhere).toHaveBeenNthCalledWith(1, 'measurement.timestamp >= :from', expect.any(Object));
-    expect(builder.andWhere).toHaveBeenNthCalledWith(2, 'measurement.timestamp <= :to', expect.any(Object));
-    expect(builder.orderBy).toHaveBeenCalledWith('measurement.timestamp', 'ASC');
+    expect(builder.andWhere).toHaveBeenNthCalledWith(
+      1,
+      'measurement.timestamp >= :from',
+      expect.any(Object),
+    );
+    expect(builder.andWhere).toHaveBeenNthCalledWith(
+      2,
+      'measurement.timestamp <= :to',
+      expect.any(Object),
+    );
+    expect(builder.orderBy).toHaveBeenCalledWith(
+      'measurement.timestamp',
+      'ASC',
+    );
     expect(builder.limit).toHaveBeenCalledWith(2);
     expect(response.data).toEqual([
       { timestamp: '2026-09-06T14:00:00.000Z', value: 72.4 },
@@ -89,36 +100,58 @@ describe('MeasurementsService', () => {
   });
 
   it.each([
-    ['numericValue', { numericValue: 12.5, booleanValue: null, textValue: null }, 12.5],
-    ['booleanValue', { numericValue: null, booleanValue: false, textValue: null }, false],
-    ['textValue', { numericValue: null, booleanValue: null, textValue: 'RUNNING' }, 'RUNNING'],
-  ])('normalizes %s without exposing database columns', async (_name, values, expected) => {
-    const { service, getOne } = createService();
-    getOne.mockResolvedValue({ timestamp: new Date('2026-09-06T14:02:00Z'), ...values });
+    [
+      'numericValue',
+      { numericValue: 12.5, booleanValue: null, textValue: null },
+      12.5,
+    ],
+    [
+      'booleanValue',
+      { numericValue: null, booleanValue: false, textValue: null },
+      false,
+    ],
+    [
+      'textValue',
+      { numericValue: null, booleanValue: null, textValue: 'RUNNING' },
+      'RUNNING',
+    ],
+  ])(
+    'normalizes %s without exposing database columns',
+    async (_name, values, expected) => {
+      const { service, getOne } = createService();
+      getOne.mockResolvedValue({
+        timestamp: new Date('2026-09-06T14:02:00Z'),
+        ...values,
+      });
 
-    const response = await service.findLatest(assetVariableId);
+      const response = await service.findLatest(assetVariableId);
 
-    expect(response).toMatchObject({
-      asset_variable_id: assetVariableId,
-      timestamp: '2026-09-06T14:02:00.000Z',
-      value: expected,
-    });
-    expect(response).not.toHaveProperty('numericValue');
-    expect(response).not.toHaveProperty('booleanValue');
-    expect(response).not.toHaveProperty('textValue');
-  });
+      expect(response).toMatchObject({
+        asset_variable_id: assetVariableId,
+        timestamp: '2026-09-06T14:02:00.000Z',
+        value: expected,
+      });
+      expect(response).not.toHaveProperty('numericValue');
+      expect(response).not.toHaveProperty('booleanValue');
+      expect(response).not.toHaveProperty('textValue');
+    },
+  );
 
   it('returns 404 when the latest measurement does not exist', async () => {
     const { service, getOne } = createService();
     getOne.mockResolvedValue(undefined);
 
-    await expect(service.findLatest(assetVariableId)).rejects.toBeInstanceOf(NotFoundException);
+    await expect(service.findLatest(assetVariableId)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
   });
 
   it('returns 404 when the AssetVariable is missing from the cache', async () => {
     const { service, findOneBy } = createService();
     findOneBy.mockResolvedValue(undefined);
 
-    await expect(service.findInRange(query)).rejects.toBeInstanceOf(NotFoundException);
+    await expect(service.findInRange(query)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
   });
 });

@@ -28,28 +28,32 @@ describe('MeasurementConsumer', () => {
     ['INTEGER', 1500, [1500, null, null]],
     ['BOOLEAN', true, [null, true, null]],
     ['STRING', 'RUNNING', [null, null, 'RUNNING']],
-  ])('persists a valid %s value in its typed column', async (dataType, value, columns) => {
-    const { consumer, query } = createConsumer(dataType, value as number);
+  ])(
+    'persists a valid %s value in its typed column',
+    async (dataType, value, columns) => {
+      const { consumer, query } = createConsumer(dataType, value as number);
 
-    await expect(
-      consumer.processMessage(
-        JSON.stringify({ variable_id: variableId, timestamp, value }),
-      ),
-    ).resolves.toBe(true);
+      await expect(
+        consumer.processMessage(
+          JSON.stringify({ variable_id: variableId, timestamp, value }),
+        ),
+      ).resolves.toBe(true);
 
-    expect(query).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO'), [
-      variableId,
-      new Date(timestamp),
-      ...columns,
-    ]);
-  });
+      expect(query).toHaveBeenCalledWith(
+        expect.stringContaining('INSERT INTO'),
+        [variableId, new Date(timestamp), ...columns],
+      );
+    },
+  );
 
   it('rejects an unknown AssetVariable without inserting', async () => {
     const { consumer, findOneBy, query } = createConsumer('FLOAT');
     findOneBy.mockResolvedValue(undefined);
 
     await expect(
-      consumer.processMessage(JSON.stringify({ variable_id: variableId, timestamp, value: 1 })),
+      consumer.processMessage(
+        JSON.stringify({ variable_id: variableId, timestamp, value: 1 }),
+      ),
     ).resolves.toBe(false);
 
     expect(query).not.toHaveBeenCalled();
@@ -65,7 +69,11 @@ describe('MeasurementConsumer', () => {
     ).resolves.toBe(false);
     await expect(
       consumer.processMessage(
-        JSON.stringify({ variable_id: variableId, timestamp: 'invalid', value: 1 }),
+        JSON.stringify({
+          variable_id: variableId,
+          timestamp: 'invalid',
+          value: 1,
+        }),
       ),
     ).resolves.toBe(false);
 
@@ -76,7 +84,9 @@ describe('MeasurementConsumer', () => {
     const { consumer, query } = createConsumer('INTEGER');
 
     await expect(
-      consumer.processMessage(JSON.stringify({ variable_id: variableId, timestamp })),
+      consumer.processMessage(
+        JSON.stringify({ variable_id: variableId, timestamp }),
+      ),
     ).resolves.toBe(false);
     await expect(
       consumer.processMessage(

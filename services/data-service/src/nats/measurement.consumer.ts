@@ -36,7 +36,9 @@ export class MeasurementConsumer {
     try {
       message = JSON.parse(payload) as MeasurementMessage;
     } catch (error) {
-      this.logger.warn(`Rejected measurement with malformed JSON: ${this.describe(error)}`);
+      this.logger.warn(
+        `Rejected measurement with malformed JSON: ${this.describe(error)}`,
+      );
       return false;
     }
 
@@ -47,7 +49,9 @@ export class MeasurementConsumer {
 
     const timestamp = new Date(message.timestamp);
     if (Number.isNaN(timestamp.getTime())) {
-      this.logger.warn(`Rejected measurement with invalid timestamp for ${message.variable_id}`);
+      this.logger.warn(
+        `Rejected measurement with invalid timestamp for ${message.variable_id}`,
+      );
       return false;
     }
 
@@ -55,7 +59,9 @@ export class MeasurementConsumer {
       assetVariableId: message.variable_id,
     });
     if (!metadata) {
-      this.logger.warn(`Rejected measurement for unknown AssetVariable ${message.variable_id}`);
+      this.logger.warn(
+        `Rejected measurement for unknown AssetVariable ${message.variable_id}`,
+      );
       return false;
     }
 
@@ -104,7 +110,10 @@ export class MeasurementConsumer {
     );
   }
 
-  private toTypedValue(value: unknown, dataType: string): TypedMeasurementValue | null {
+  private toTypedValue(
+    value: unknown,
+    dataType: string,
+  ): TypedMeasurementValue | null {
     switch (dataType.trim().toUpperCase()) {
       case 'FLOAT':
         return typeof value === 'number' && Number.isFinite(value)

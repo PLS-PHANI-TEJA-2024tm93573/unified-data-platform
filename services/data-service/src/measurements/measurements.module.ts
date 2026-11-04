@@ -15,7 +15,8 @@ import { MeasurementsController } from './measurements.controller';
     {
       provide: MEASUREMENT_REPOSITORY,
       inject: [DataSource],
-      useFactory: (dataSource: DataSource) => dataSource.getRepository(Measurement),
+      useFactory: (dataSource: DataSource) =>
+        dataSource.getRepository(Measurement),
     },
     {
       provide: DATA_SERVICE_VARIABLE_QUERY_REPOSITORY,

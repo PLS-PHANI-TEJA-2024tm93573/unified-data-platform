@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class UseAssetVariableIdForCache1788600158361
-  implements MigrationInterface
-{
+export class UseAssetVariableIdForCache1788600158361 implements MigrationInterface {
   name = 'UseAssetVariableIdForCache1788600158361';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
