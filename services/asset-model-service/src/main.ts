@@ -5,7 +5,6 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Transport } from '@nestjs/microservices';
 import { join } from 'path';
 
-
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
@@ -18,12 +17,10 @@ async function bootstrap() {
     transport: Transport.GRPC,
     options: {
       package: 'assetmodel',
-      protoPath: join(__dirname,'../proto/asset-model.proto'),
-      url: '0.0.0.0:50051'
-    }
-  })
-
-  
+      protoPath: join(__dirname, '../proto/asset-model.proto'),
+      url: '0.0.0.0:50051',
+    },
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -35,7 +32,9 @@ async function bootstrap() {
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Asset Model Service API')
-    .setDescription('REST API for asset types, variables, assets, and relationships')
+    .setDescription(
+      'REST API for asset types, variables, assets, and relationships',
+    )
     .setVersion('1.0')
     .build();
   const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
@@ -43,11 +42,8 @@ async function bootstrap() {
     jsonDocumentUrl: 'api/docs-json',
   });
 
-
-
   await app.startAllMicroservices();
 
   await app.listen(process.env.PORT ?? 3000);
-
 }
 bootstrap();

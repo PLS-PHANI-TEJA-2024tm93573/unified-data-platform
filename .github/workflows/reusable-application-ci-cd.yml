@@ -53,6 +53,10 @@ jobs:
         if: inputs.application == 'asset-service' || inputs.application == 'data-service'
         working-directory: ${{ inputs.source-path }}
         run: npm exec -- eslint "src/**/*.ts" "test/**/*.ts"
+      - name: Check code formatting
+        if: inputs.application == 'asset-service' || inputs.application == 'data-service'
+        working-directory: ${{ inputs.source-path }}
+        run: npm run format:check
       - name: Run application tests
         working-directory: ${{ inputs.source-path }}
         env:
