@@ -175,6 +175,30 @@ describe('AssetModelSyncService', () => {
     expect(dataSource.transaction).not.toHaveBeenCalled();
   });
 
+  it('keeps booting and retries a failed initial sync after ten seconds', async () => {
+    jest.useFakeTimers();
+    process.env.ASSET_METADATA_RECONCILIATION_MS = '1000';
+    const retryingService = new AssetModelSyncService(dataSource as never);
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({ ok: false, status: 503 })
+      .mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve([]),
+      });
+
+    await expect(
+      retryingService.onApplicationBootstrap(),
+    ).resolves.toBeUndefined();
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+
+    await jest.advanceTimersByTimeAsync(10_000);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+
+    await retryingService.onApplicationShutdown();
+    delete process.env.ASSET_METADATA_RECONCILIATION_MS;
+    jest.useRealTimers();
+  });
+
   it('refreshes on a valid notification and ignores malformed payloads', async () => {
     const valid = JSON.stringify({
       eventId: 'event-1',
@@ -186,6 +210,7 @@ describe('AssetModelSyncService', () => {
     expect(service.processNotification(valid)).toBe(true);
     await new Promise((resolve) => setImmediate(resolve));
     expect(global.fetch).toHaveBeenCalled();
+    await service.onApplicationShutdown();
   });
 
   it('coalesces notifications received during a hierarchy fetch', async () => {
@@ -208,11 +233,12 @@ describe('AssetModelSyncService', () => {
   it('runs periodic reconciliation and cancels it on shutdown', async () => {
     jest.useFakeTimers();
     process.env.ASSET_METADATA_RECONCILIATION_MS = '1000';
-    await service.onApplicationBootstrap();
+    const periodicService = new AssetModelSyncService(dataSource as never);
+    await periodicService.onApplicationBootstrap();
     expect(global.fetch).toHaveBeenCalledTimes(1);
     await jest.advanceTimersByTimeAsync(1000);
     expect(global.fetch).toHaveBeenCalledTimes(2);
-    await service.onApplicationShutdown();
+    await periodicService.onApplicationShutdown();
     await jest.advanceTimersByTimeAsync(5000);
     expect(global.fetch).toHaveBeenCalledTimes(2);
     delete process.env.ASSET_METADATA_RECONCILIATION_MS;
