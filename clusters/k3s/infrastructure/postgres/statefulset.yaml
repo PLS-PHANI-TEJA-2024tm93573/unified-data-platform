@@ -27,6 +27,9 @@ spec:
             - name: postgres
               containerPort: 5432
               protocol: TCP
+          args:
+            - "-c"
+            - "shared_preload_libraries=timescaledb"
           env:
             - name: POSTGRES_DB
               valueFrom:
