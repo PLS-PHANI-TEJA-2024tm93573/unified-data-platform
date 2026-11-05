@@ -18,7 +18,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
         - name: kpi-service
-          image: docker.io/plsphaniteja2024tm93573/kpi-service:00fdcc530fb7731f85cb8142465de65a04f34571
+          image: docker.io/plsphaniteja2024tm93573/kpi-service:a4455f24b8a267889934968fb7652fa8039c4048
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
