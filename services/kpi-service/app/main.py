@@ -1,6 +1,8 @@
 """FastAPI application exposing live and historical asset OEE."""
 
-from contextlib import asynccontextmanager
+import asyncio
+import logging
+from contextlib import asynccontextmanager, suppress
 from datetime import datetime, timezone
 
 import httpx
@@ -15,14 +17,37 @@ from .models import OeeReading
 from .oee import ENABLED_ASSETS, calculate_oee
 from .streaming import manager
 
+logger = logging.getLogger(__name__)
+
+
+async def _synchronize_asset_config_until_available() -> None:
+    """Keep the service running while retrying unavailable Asset Model metadata."""
+    while True:
+        try:
+            await synchronize_asset_config()
+            logger.info("Synchronized KPI asset metadata from Asset Model")
+            return
+        except Exception:
+            logger.exception(
+                "Asset Model metadata sync failed; retrying in 10 seconds"
+            )
+            await asyncio.sleep(10)
+
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    """Synchronize Asset Model metadata, then connect and release TimescaleDB."""
-    await synchronize_asset_config()
-    await repository.connect()
-    yield
-    await repository.close()
+    """Retry Asset Model sync in the background and manage TimescaleDB lifecycle."""
+    asset_sync_task = asyncio.create_task(
+        _synchronize_asset_config_until_available()
+    )
+    try:
+        await repository.connect()
+        yield
+    finally:
+        asset_sync_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await asset_sync_task
+        await repository.close()
 
 
 app = FastAPI(

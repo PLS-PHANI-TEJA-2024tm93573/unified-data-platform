@@ -33,21 +33,18 @@ export class AssetModelSyncService
   private syncPending = false;
   private reconciliationTimer?: NodeJS.Timeout;
   private reconciliationIntervalMs: number;
+  private static readonly retryIntervalMs = 10_000;
 
   constructor(private readonly dataSource: DataSource) {
-    this.reconciliationIntervalMs = Number(
+    const intervalMs = Number(
       process.env.ASSET_METADATA_RECONCILIATION_MS ?? 300000,
     );
+    this.reconciliationIntervalMs =
+      Number.isFinite(intervalMs) && intervalMs > 0 ? intervalMs : 300000;
   }
 
   async onApplicationBootstrap(): Promise<void> {
-    try {
-      await this.synchronize();
-      this.startPeriodicReconciliation();
-    } catch (error) {
-      this.logger.error('Asset Model metadata synchronization failed', error);
-      throw error;
-    }
+    await this.synchronizeWithRetry();
   }
 
   async synchronize(): Promise<void> {
@@ -71,7 +68,7 @@ export class AssetModelSyncService
   }
 
   async onApplicationShutdown(): Promise<void> {
-    if (this.reconciliationTimer) clearInterval(this.reconciliationTimer);
+    if (this.reconciliationTimer) clearTimeout(this.reconciliationTimer);
     this.reconciliationTimer = undefined;
     await this.syncPromise;
   }
@@ -160,18 +157,25 @@ export class AssetModelSyncService
     };
   }
 
-  private startPeriodicReconciliation(): void {
-    const raw = Number(process.env.ASSET_METADATA_RECONCILIATION_MS ?? 300000);
-    this.reconciliationIntervalMs =
-      Number.isFinite(raw) && raw > 0 ? raw : 300000;
-    this.reconciliationTimer = setInterval(() => {
-      void this.synchronize().catch((error) => {
-        this.logger.error(
-          'Periodic Asset Model metadata synchronization failed',
-          error,
-        );
-      });
-    }, this.reconciliationIntervalMs);
+  private async synchronizeWithRetry(): Promise<void> {
+    try {
+      await this.synchronize();
+      this.scheduleNextSynchronization(this.reconciliationIntervalMs);
+    } catch (error) {
+      this.logger.error(
+        `Asset Model metadata synchronization failed; retrying in ${AssetModelSyncService.retryIntervalMs}ms`,
+        error,
+      );
+      this.scheduleNextSynchronization(AssetModelSyncService.retryIntervalMs);
+    }
+  }
+
+  private scheduleNextSynchronization(delayMs: number): void {
+    if (this.reconciliationTimer) clearTimeout(this.reconciliationTimer);
+    this.reconciliationTimer = setTimeout(() => {
+      this.reconciliationTimer = undefined;
+      void this.synchronizeWithRetry();
+    }, delayMs);
   }
 
   processNotification(payload: string): boolean {
@@ -189,12 +193,7 @@ export class AssetModelSyncService
         this.logger.warn('Ignored malformed Asset Model metadata notification');
         return false;
       }
-      void this.synchronize().catch((error) => {
-        this.logger.error(
-          'Event-triggered Asset Model metadata synchronization failed',
-          error,
-        );
-      });
+      void this.synchronizeWithRetry();
       return true;
     } catch {
       this.logger.warn('Ignored malformed Asset Model metadata notification');
