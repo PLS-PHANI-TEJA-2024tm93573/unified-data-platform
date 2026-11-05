@@ -18,7 +18,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
         - name: simulator
-          image: docker.io/plsphaniteja2024tm93573/simulator:00fdcc530fb7731f85cb8142465de65a04f34571
+          image: docker.io/plsphaniteja2024tm93573/simulator:297e51779bc15f6daa15deea0a2a7ad17483b37d
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

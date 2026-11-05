@@ -18,7 +18,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
         - name: data-service
-          image: docker.io/plsphaniteja2024tm93573/data-service:a4455f24b8a267889934968fb7652fa8039c4048
+          image: docker.io/plsphaniteja2024tm93573/data-service:297e51779bc15f6daa15deea0a2a7ad17483b37d
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
