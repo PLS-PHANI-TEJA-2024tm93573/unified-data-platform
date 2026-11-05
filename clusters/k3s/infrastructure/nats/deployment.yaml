@@ -19,17 +19,11 @@ spec:
     spec:
       containers:
         - name: nats
-          image: nats:2.11-alpine
+          image: nats:latest
           imagePullPolicy: IfNotPresent
-          args:
-            - "--http_port"
-            - "8222"
           ports:
             - name: client
               containerPort: 4222
-              protocol: TCP
-            - name: monitoring
-              containerPort: 8222
               protocol: TCP
           readinessProbe:
             tcpSocket:

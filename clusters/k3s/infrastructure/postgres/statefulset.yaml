@@ -21,7 +21,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
         - name: postgres
-          image: postgres:16-alpine
+          image: timescale/timescaledb:latest-pg17
           imagePullPolicy: IfNotPresent
           ports:
             - name: postgres
